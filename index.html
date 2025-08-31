@@ -29,9 +29,50 @@
                 </form>
             </section>
 
+            <section id="user-dashboard" style="display: none;">
+                <button id="buy-subscription-btn">Buy Subscription</button>
+                <div id="links-container"></div>
+            </section>
+
+            <div id="subscription-modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close-btn">&times;</span>
+                    <h2>Buy Subscription</h2>
+                    <p>Subscription Price: $10/month</p>
+                    <form id="subscription-form">
+                        <input type="file" id="payment-proof" required>
+                        <button type="submit">Submit Payment</button>
+                    </form>
+                </div>
+            </div>
+
             <section id="gallery-section" style="display: none;">
                 <h2>Gallery</h2>
                 <div id="image-grid"></div>
+            </section>
+
+            <section id="admin-panel" style="display: none;">
+                <h2>Admin Panel</h2>
+                <div id="admin-tabs">
+                    <button class="tab-btn active" data-tab="subscriptions">Subscriptions</button>
+                    <button class="tab-btn" data-tab="links">Links</button>
+                </div>
+                <div id="admin-content">
+                    <div id="subscriptions-tab" class="tab-content active">
+                        <h3>Subscription Requests</h3>
+                        <div id="subscriptions-list"></div>
+                    </div>
+                    <div id="links-tab" class="tab-content">
+                        <h3>Manage Links</h3>
+                        <form id="link-form">
+                            <input type="hidden" id="link-id">
+                            <input type="text" id="link-title" placeholder="Link Title" required>
+                            <input type="url" id="link-url" placeholder="Link URL" required>
+                            <button type="submit">Save Link</button>
+                        </form>
+                        <div id="links-list"></div>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
