@@ -1,0 +1,26 @@
+{
+    "users": [
+        {
+            "id": 1,
+            "username": "admin",
+            "password": "password",
+            "isAdmin": true,
+            "subscription": {
+                "active": true,
+                "endDate": "9999-12-31"
+            }
+        },
+        {
+            "id": 2,
+            "username": "user",
+            "password": "password",
+            "isAdmin": false,
+            "subscription": {
+                "active": false,
+                "endDate": null
+            }
+        }
+    ],
+    "subscriptions": [],
+    "links": []
+}
