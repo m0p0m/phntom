@@ -1,11 +1,10 @@
 const request = require('supertest');
-const app = require('../server');
-const Command = require('../models/Command');
+const { app } = require('../server');
 
-describe('Commands API', () => {
+describe('Commands API (Refactored)', () => {
   let token;
   let commandId;
-  const testDeviceId = 'command-test-device';
+  let testDeviceId;
 
   beforeAll(async () => {
     const res = await request(app)
@@ -15,52 +14,45 @@ describe('Commands API', () => {
         password: process.env.ADMIN_PASSWORD,
       });
     token = res.body.token;
-  });
 
-  describe('POST /api/commands/:deviceId', () => {
-    it('should queue a new command for a device', async () => {
-      const res = await request(app)
-        .post(`/api/commands/${testDeviceId}`)
+    const deviceRes = await request(app)
+        .post('/api/devices/register')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          type: 'SHOW_MESSAGE',
-          payload: { message: 'Hello' },
+            uniqueIdentifier: 'command-test-device-uuid',
+            deviceName: 'Command Test Device',
+            platform: 'android',
         });
-      expect(res.statusCode).toEqual(201);
-      expect(res.body).toHaveProperty('status', 'PENDING');
-      expect(res.body).toHaveProperty('type', 'SHOW_MESSAGE');
-      commandId = res.body._id;
-    });
+    testDeviceId = deviceRes.body._id;
   });
 
-  describe('GET /api/commands/:deviceId/pending', () => {
-    it('should fetch pending commands for a device', async () => {
-      const res = await request(app)
-        .get(`/api/commands/${testDeviceId}/pending`)
-        .set('Authorization', `Bearer ${token}`);
-      expect(res.statusCode).toEqual(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(1);
-      expect(res.body[0]._id).toBe(commandId);
-    });
-  });
-
-  describe('PUT /api/commands/:commandId', () => {
-    it('should update the status of a command', async () => {
-      const res = await request(app)
-        .put(`/api/commands/${commandId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send({ status: 'EXECUTED' });
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('status', 'EXECUTED');
-    });
-
-    it('should no longer be in pending after update', async () => {
-        const res = await request(app)
-          .get(`/api/commands/${testDeviceId}/pending`)
-          .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
-        expect(res.body.length).toBe(0);
+  it('should queue a new command for a device', async () => {
+    const res = await request(app)
+      .post(`/api/devices/${testDeviceId}/commands`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        type: 'SHOW_MESSAGE',
+        payload: { message: 'Hello' },
       });
+    expect(res.statusCode).toEqual(201);
+    expect(res.body).toHaveProperty('status', 'PENDING');
+    commandId = res.body._id;
+  });
+
+  it('should fetch pending commands for a device', async () => {
+    const res = await request(app)
+      .get(`/api/devices/${testDeviceId}/commands/pending`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.length).toBe(1);
+  });
+
+  it('should update the status of a command', async () => {
+    const res = await request(app)
+      .put(`/api/commands/${commandId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'EXECUTED' });
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('status', 'EXECUTED');
   });
 });

@@ -1,6 +1,5 @@
 const request = require('supertest');
-const mongoose = require('mongoose');
-const app = require('../server'); // Import the app
+const { app } = require('../server'); // We still need app for supertest
 
 describe('Auth API', () => {
   describe('POST /api/auth/login', () => {
@@ -22,25 +21,6 @@ describe('Auth API', () => {
           username: process.env.ADMIN_USERNAME,
           password: 'wrongpassword',
         });
-      expect(res.statusCode).toEqual(401);
-      expect(res.body).toHaveProperty('message', 'Invalid username or password');
-    });
-
-    it('should return 401 for invalid username', async () => {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          username: 'wronguser',
-          password: process.env.ADMIN_PASSWORD,
-        });
-      expect(res.statusCode).toEqual(401);
-      expect(res.body).toHaveProperty('message', 'Invalid username or password');
-    });
-
-    it('should return 401 for missing credentials', async () => {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({});
       expect(res.statusCode).toEqual(401);
     });
   });

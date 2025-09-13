@@ -8,9 +8,10 @@ const contactSchema = new mongoose.Schema(
     //   required: true,
     //   ref: 'User',
     // },
-    deviceId: {
-      type: String,
-      required: [true, 'Please add a device ID'],
+    device: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Device',
+      required: true,
     },
     name: {
       type: String,
@@ -20,7 +21,6 @@ const contactSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       required: [true, 'Please add a phone number'],
-      unique: true, // A phone number should be unique per device/user context
     },
   },
   {
@@ -28,11 +28,8 @@ const contactSchema = new mongoose.Schema(
   }
 );
 
-// To make the unique constraint work per device, you'd create a compound index.
-// For example: contactSchema.index({ deviceId: 1, phoneNumber: 1 }, { unique: true });
-// I will add this for robustness.
-
-contactSchema.index({ deviceId: 1, phoneNumber: 1 }, { unique: true });
+// A phone number should be unique per device, not globally.
+contactSchema.index({ device: 1, phoneNumber: 1 }, { unique: true });
 
 
 module.exports = mongoose.model('Contact', contactSchema);

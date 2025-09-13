@@ -8,12 +8,12 @@ This document outlines the API endpoints for managing a device's call logs. All 
 
 Retrieves a list of all call logs for a specific device, sorted by the most recent call date.
 
-- **URL:** `/api/call-logs/:deviceId`
+- **URL:** `/api/devices/:deviceId/call-logs`
 - **Method:** `GET`
 - **Access:** `Private`
 
 ### URL Parameters
-- `deviceId` (String, required): The ID of the device.
+- `deviceId` (String, required): The `_id` of the device.
 
 ### Query Parameters
 - `select` (String): Comma-separated list of fields to include.
@@ -53,17 +53,19 @@ Retrieves a list of all call logs for a specific device, sorted by the most rece
 
 ## 2. Add a New Call Log
 
-Adds a new call log record to the database. This would typically be sent from the device after a call has ended.
+Adds a new call log record to the database for a specific device. This would typically be sent from the device after a call has ended.
 
-- **URL:** `/api/call-logs`
+- **URL:** `/api/devices/:deviceId/call-logs`
 - **Method:** `POST`
 - **Access:** `Private`
+
+### URL Parameters
+- `deviceId` (String, required): The `_id` of the device.
 
 ### Request Body
 
 ```json
 {
-  "deviceId": "device-123",
   "phoneNumber": "+1-555-987-6543",
   "type": "OUTGOING",
   "duration": 300,

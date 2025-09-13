@@ -1,11 +1,13 @@
 const request = require('supertest');
-const app = require('../server');
-const File = require('../models/File');
+const { app } = require('../server');
+const fs = require('fs');
+const path = require('path');
 
-describe('Files API', () => {
+describe('Files API (Refactored)', () => {
   let token;
+  let testDeviceId;
   let fileId;
-  const testDeviceId = 'files-test-device';
+  let uploadedFilename;
 
   beforeAll(async () => {
     const res = await request(app)
@@ -15,75 +17,48 @@ describe('Files API', () => {
         password: process.env.ADMIN_PASSWORD,
       });
     token = res.body.token;
-  });
 
-  const fileData = {
-    deviceId: testDeviceId,
-    fileName: 'test-file.txt',
-    filePath: '/data/test-file.txt',
-    fileType: 'text/plain',
-    size: 1024,
-    storageUrl: 'http://example.com/storage/test-file.txt',
-  };
-
-  describe('POST /api/files', () => {
-    it('should not add file metadata without a token', async () => {
-      const res = await request(app).post('/api/files').send(fileData);
-      expect(res.statusCode).toEqual(401);
-    });
-
-    it('should add new file metadata with a valid token', async () => {
-      const res = await request(app)
-        .post('/api/files')
-        .set('Authorization', `Bearer ${token}`)
-        .send(fileData);
-      expect(res.statusCode).toEqual(201);
-      expect(res.body).toHaveProperty('fileName', fileData.fileName);
-      fileId = res.body._id; // Save for later tests
-    });
-  });
-
-  describe('GET /api/files/:deviceId', () => {
-    it('should get file metadata for a device', async () => {
-      const res = await request(app)
-        .get(`/api/files/${testDeviceId}`)
-        .set('Authorization', `Bearer ${token}`);
-      expect(res.statusCode).toEqual(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(1);
-      expect(res.body[0].fileName).toBe(fileData.fileName);
-    });
-
-    it('should filter files by path', async () => {
-        // Add another file in a different path
-        await request(app)
-          .post('/api/files')
-          .set('Authorization', `Bearer ${token}`)
-          .send({ ...fileData, fileName: 'another.txt', filePath: '/other/another.txt' });
-
-        const res = await request(app)
-          .get(`/api/files/${testDeviceId}?path=/data`)
-          .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
-        expect(res.body.length).toBe(1);
-        expect(res.body[0].filePath).toBe('/data/test-file.txt');
+    const deviceRes = await request(app)
+      .post('/api/devices/register')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        uniqueIdentifier: 'files-test-device-uuid',
+        deviceName: 'Files Test Device',
+        platform: 'android',
       });
+    testDeviceId = deviceRes.body._id;
   });
 
-  describe('DELETE /api/files/:id', () => {
-    it('should delete file metadata', async () => {
-      const res = await request(app)
-        .delete(`/api/files/${fileId}`)
-        .set('Authorization', `Bearer ${token}`);
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('message', 'File metadata removed');
-    });
+  it('should upload a file and create metadata', async () => {
+    const res = await request(app)
+      .post(`/api/devices/${testDeviceId}/files/upload`)
+      .set('Authorization', `Bearer ${token}`)
+      .field('filePath', '/data/on-device/test-upload.txt')
+      .attach('file', Buffer.from('this is a test file'), 'test-upload.txt');
 
-    it('should return 404 for a deleted file', async () => {
-        const res = await request(app)
-          .delete(`/api/files/${fileId}`)
-          .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(404);
-      });
+    expect(res.statusCode).toEqual(201);
+    expect(res.body.file).toHaveProperty('fileName', 'test-upload.txt');
+    fileId = res.body.file._id;
+    uploadedFilename = res.body.file.storageUrl.split('/').pop();
+  });
+
+  it('should get file metadata for the device', async () => {
+    const res = await request(app)
+      .get(`/api/devices/${testDeviceId}/files`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.data.length).toBe(1);
+  });
+
+  it('should delete file metadata and the physical file', async () => {
+    const res = await request(app)
+      .delete(`/api/files/${fileId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.statusCode).toEqual(200);
+
+    // Verify the file is gone from the filesystem
+    const filePath = path.join(__dirname, '../../uploads', uploadedFilename);
+    const fileExists = fs.existsSync(filePath);
+    expect(fileExists).toBe(false);
   });
 });

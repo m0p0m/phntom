@@ -8,12 +8,12 @@ This document outlines the API endpoints for managing file metadata. All endpoin
 
 Retrieves a list of all file metadata records for a specific device. Can optionally filter by a base path.
 
-- **URL:** `/api/files/:deviceId`
+- **URL:** `/api/devices/:deviceId/files`
 - **Method:** `GET`
 - **Access:** `Private`
 
 ### URL Parameters
-- `deviceId` (String, required): The ID of the device.
+- `deviceId` (String, required): The `_id` of the device.
 
 ### Query Parameters
 - `filePath` (String, optional): Filter by exact file path. To filter by directory, you can use `filePath[regex]=^/DCIM/Camera`.
@@ -55,17 +55,19 @@ Retrieves a list of all file metadata records for a specific device. Can optiona
 
 ## 2. Add New File Metadata
 
-Adds a new file metadata record to the database.
+Adds a new file metadata record to the database for a specific device.
 
-- **URL:** `/api/files`
+- **URL:** `/api/devices/:deviceId/files`
 - **Method:** `POST`
 - **Access:** `Private`
+
+### URL Parameters
+- `deviceId` (String, required): The `_id` of the device.
 
 ### Request Body
 
 ```json
 {
-  "deviceId": "device-123",
   "fileName": "report.pdf",
   "filePath": "/Documents/report.pdf",
   "fileType": "application/pdf",
@@ -111,3 +113,36 @@ Removes a file metadata record from the database. Note: This does not delete the
 ### Error Responses
 - **Code:** `404 Not Found` if the metadata record does not exist.
 - **Code:** `401 Unauthorized` if the token is missing or invalid.
+
+---
+
+## 4. Upload a File
+
+Uploads a file directly to the server. The request must be `multipart/form-data`.
+
+- **URL:** `/api/devices/:deviceId/files/upload`
+- **Method:** `POST`
+- **Access:** `Private`
+
+### Form Data
+- `file`: The file to be uploaded.
+
+### Success Response
+- **Code:** `201 Created`
+- **Content:** An object containing a success message and the new file metadata record.
+```json
+{
+    "message": "File uploaded successfully",
+    "file": {
+        "device": "60d5f1b4e6b3f1a1b8f3a3a1",
+        "fileName": "my-test-file.txt",
+        "filePath": "/my-test-file.txt",
+        "fileType": "text/plain",
+        "size": 123,
+        "storageUrl": "/uploads/file-1624634301234.txt",
+        "_id": "60d5f1b4e6b3f1a1b8f3a3a2",
+        "createdAt": "2023-10-27T10:05:00.000Z",
+        "updatedAt": "2023-10-27T10:05:00.000Z"
+    }
+}
+```

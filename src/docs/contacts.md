@@ -4,13 +4,16 @@ This document outlines the API endpoints for managing contacts. All endpoints ar
 
 ---
 
-## 1. Get All Contacts
+## 1. Get All Contacts for a Device
 
-Retrieves a list of all contacts.
+Retrieves a list of all contacts for a specific device.
 
-- **URL:** `/api/contacts`
+- **URL:** `/api/devices/:deviceId/contacts`
 - **Method:** `GET`
 - **Access:** `Private`
+
+### URL Parameters
+- `deviceId` (String, required): The `_id` of the device.
 
 ### Query Parameters
 
@@ -48,21 +51,23 @@ Retrieves a list of all contacts.
 
 ---
 
-## 2. Create a New Contact
+## 2. Create a New Contact for a Device
 
-Adds a new contact to the database.
+Adds a new contact and associates it with a specific device.
 
-- **URL:** `/api/contacts`
+- **URL:** `/api/devices/:deviceId/contacts`
 - **Method:** `POST`
 - **Access:** `Private`
+
+### URL Parameters
+- `deviceId` (String, required): The `_id` of the device to associate the contact with.
 
 ### Request Body
 
 ```json
 {
   "name": "John Doe",
-  "phoneNumber": "+0987654321",
-  "deviceId": "device-456"
+  "phoneNumber": "+0987654321"
 }
 ```
 

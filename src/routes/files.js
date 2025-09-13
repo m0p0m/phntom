@@ -1,15 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const {
-  getInstalledApps,
-  syncInstalledApps,
-} = require('../controllers/appController');
+const { deleteFile } = require('../controllers/fileController');
 const { protect } = require('../middlewares/authMiddleware');
 
 router.use(protect);
 
-router.post('/sync', syncInstalledApps);
-
-router.get('/:deviceId', getInstalledApps);
+router.route('/:id')
+  .delete(deleteFile);
 
 module.exports = router;

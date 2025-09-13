@@ -2,9 +2,10 @@ const mongoose = require('mongoose');
 
 const fileSchema = new mongoose.Schema(
   {
-    deviceId: {
-      type: String,
-      required: [true, 'Please add a device ID'],
+    device: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Device',
+      required: true,
       index: true,
     },
     fileName: {
@@ -35,6 +36,6 @@ const fileSchema = new mongoose.Schema(
 );
 
 // Compound index to prevent duplicate file entries for the same path on a device
-fileSchema.index({ deviceId: 1, filePath: 1 }, { unique: true });
+fileSchema.index({ device: 1, filePath: 1 }, { unique: true });
 
 module.exports = mongoose.model('File', fileSchema);

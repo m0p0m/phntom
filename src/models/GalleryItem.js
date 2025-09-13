@@ -2,9 +2,10 @@ const mongoose = require('mongoose');
 
 const galleryItemSchema = new mongoose.Schema(
   {
-    deviceId: {
-      type: String,
-      required: [true, 'Please add a device ID'],
+    device: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Device',
+      required: true,
     },
     imageUrl: {
       type: String,
@@ -27,6 +28,6 @@ const galleryItemSchema = new mongoose.Schema(
   }
 );
 
-galleryItemSchema.index({ deviceId: 1, createdAt: -1 });
+galleryItemSchema.index({ device: 1, createdAt: -1 });
 
 module.exports = mongoose.model('GalleryItem', galleryItemSchema);

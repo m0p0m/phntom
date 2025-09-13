@@ -1,51 +1,41 @@
 const File = require('../models/File');
+const Device = require('../models/Device');
+const upload = require('../config/upload');
 
 // @desc    Get all file metadata for a specific device
-// @route   GET /api/files/:deviceId
+// @route   GET /api/devices/:deviceId/files
 // @access  Private
 const getFiles = async (req, res) => {
-  // The middleware now handles filtering by deviceId from params
-  // and any other query params like filePath
-  if (req.query.path) {
-    // The middleware needs to be aware of this specific logic
-    // Let's adjust the middleware to handle regex on specific fields
-    // For now, this controller logic is simplified, assuming middleware handles it.
-    // The middleware already handles general query params, so a query like
-    // ?filePath[regex]=^/DCIM&filePath[options]=i would work if we enhance it.
-    // Let's simplify the controller and enhance the middleware later if needed.
-  }
   res.status(200).json(res.advancedResults);
 };
 
-// @desc    Add file metadata
-// @route   POST /api/files
+// @desc    Add file metadata for a specific device
+// @route   POST /api/devices/:deviceId/files
 // @access  Private
 const addFile = async (req, res) => {
-  const { deviceId, fileName, filePath, fileType, size, storageUrl } = req.body;
+  const { fileName, filePath, fileType, size, storageUrl } = req.body;
+  req.body.device = req.params.deviceId;
 
-  if (!deviceId || !fileName || !filePath || !fileType || !size || !storageUrl) {
-    return res.status(400).json({ message: 'Please provide all required fields' });
+  const device = await Device.findById(req.params.deviceId);
+  if (!device) {
+      return res.status(404).json({ message: 'Device not found' });
   }
 
   try {
-    const file = await File.create({
-      deviceId,
-      fileName,
-      filePath,
-      fileType,
-      size,
-      storageUrl,
-    });
+    const file = await File.create(req.body);
     res.status(201).json(file);
   } catch (error) {
     if (error.code === 11000) {
         return res.status(400).json({ message: 'This file path already exists for this device.' });
       }
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    res.status(400).json({ message: 'Error adding file metadata', error: error.message });
   }
 };
 
-// @desc    Delete file metadata
+const fs = require('fs');
+const path = require('path');
+
+// @desc    Delete file metadata and the actual file
 // @route   DELETE /api/files/:id
 // @access  Private
 const deleteFile = async (req, res) => {
@@ -55,16 +45,74 @@ const deleteFile = async (req, res) => {
         return res.status(404).json({ message: 'File metadata not found' });
       }
 
-      await file.deleteOne();
+      const filePath = path.join(__dirname, `../../${file.storageUrl}`);
 
-      res.status(200).json({ id: req.params.id, message: 'File metadata removed' });
+      // Delete file from server
+      fs.unlink(filePath, async (err) => {
+        if (err) {
+            // Log the error but don't block deletion of DB record if file is already gone
+            console.error(`Could not delete file ${filePath}:`, err);
+        }
+
+        // Delete metadata from DB
+        await file.deleteOne();
+        res.status(200).json({ id: req.params.id, message: 'File metadata and file removed' });
+      });
+
     } catch (error) {
       res.status(500).json({ message: 'Server Error', error: error.message });
     }
   };
 
+// @desc    Upload a file for a device
+// @route   POST /api/devices/:deviceId/files/upload
+// @access  Private
+const uploadFile = (req, res) => {
+    upload(req, res, async (err) => {
+        if(err){
+            return res.status(400).json({ message: err });
+        }
+        if(req.file == undefined){
+            return res.status(400).json({ message: 'Error: No File Selected!' });
+        }
+
+        const { deviceId } = req.params;
+        const { originalname, mimetype, size } = req.file;
+        const { filePath } = req.body; // Get original path from body
+
+        if (!filePath) {
+            return res.status(400).json({ message: 'filePath is required in the multipart body' });
+        }
+
+        try {
+            const device = await Device.findById(deviceId);
+            if (!device) {
+                return res.status(404).json({ message: 'Device not found' });
+            }
+
+            const fileMetadata = await File.create({
+                device: deviceId,
+                fileName: originalname,
+                filePath: filePath,
+                fileType: mimetype,
+                size: size,
+                storageUrl: `/uploads/${req.file.filename}`
+            });
+
+            res.status(201).json({
+                message: 'File uploaded successfully',
+                file: fileMetadata
+            });
+
+        } catch (error) {
+            res.status(500).json({ message: 'Server Error', error: error.message });
+        }
+    });
+};
+
 module.exports = {
   getFiles,
   addFile,
   deleteFile,
+  uploadFile,
 };

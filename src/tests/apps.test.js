@@ -1,10 +1,10 @@
 const request = require('supertest');
-const app = require('../server');
+const { app } = require('../server');
 const InstalledApp = require('../models/InstalledApp');
 
-describe('Installed Apps API', () => {
+describe('Installed Apps API (Refactored)', () => {
   let token;
-  const testDeviceId = 'apps-test-device';
+  let testDeviceId;
 
   const initialApps = [
     { appName: 'App A', packageName: 'com.a.app', version: '1.0' },
@@ -12,12 +12,11 @@ describe('Installed Apps API', () => {
   ];
 
   const updatedApps = [
-    { appName: 'App B', packageName: 'com.b.app', version: '2.1' }, // Updated version
-    { appName: 'App C', packageName: 'com.c.app', version: '3.0' }, // New app
+    { appName: 'App B', packageName: 'com.b.app', version: '2.1' },
+    { appName: 'App C', packageName: 'com.c.app', version: '3.0' },
   ];
 
   beforeAll(async () => {
-    // Get a token
     const res = await request(app)
       .post('/api/auth/login')
       .send({
@@ -25,61 +24,40 @@ describe('Installed Apps API', () => {
         password: process.env.ADMIN_PASSWORD,
       });
     token = res.body.token;
-  });
 
-  describe('POST /api/apps/sync', () => {
-    it('should perform an initial sync of apps', async () => {
-      const res = await request(app)
-        .post('/api/apps/sync')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          deviceId: testDeviceId,
-          apps: initialApps,
-        });
-      expect(res.statusCode).toEqual(200);
-      expect(res.body.message).toBe('Sync successful');
-
-      // Verify the apps were created
-      const appsInDb = await InstalledApp.find({ deviceId: testDeviceId });
-      expect(appsInDb.length).toBe(2);
-    });
-
-    it('should update the app list on a subsequent sync', async () => {
-        const res = await request(app)
-          .post('/api/apps/sync')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            deviceId: testDeviceId,
-            apps: updatedApps,
-          });
-        expect(res.statusCode).toEqual(200);
-
-        // Verify the sync logic
-        const appsInDb = await InstalledApp.find({ deviceId: testDeviceId }).lean();
-        expect(appsInDb.length).toBe(2);
-
-        const packageNames = appsInDb.map(app => app.packageName);
-        expect(packageNames).toContain('com.b.app');
-        expect(packageNames).toContain('com.c.app');
-        expect(packageNames).not.toContain('com.a.app'); // App A should have been deleted
-
-        const appB = appsInDb.find(app => app.packageName === 'com.b.app');
-        expect(appB.version).toBe('2.1'); // Check for updated version
+    const deviceRes = await request(app)
+      .post('/api/devices/register')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        uniqueIdentifier: 'apps-test-device-uuid',
+        deviceName: 'Apps Test Device',
+        platform: 'android',
       });
+    testDeviceId = deviceRes.body._id;
   });
 
-  describe('GET /api/apps/:deviceId', () => {
-    it('should get the synced list of apps for a device', async () => {
-      const res = await request(app)
-        .get(`/api/apps/${testDeviceId}`)
-        .set('Authorization', `Bearer ${token}`);
+  it('should perform an initial sync and a subsequent updated sync', async () => {
+    // Initial Sync
+    await request(app)
+      .post(`/api/devices/${testDeviceId}/apps/sync`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ apps: initialApps })
+      .expect(200);
 
-      expect(res.statusCode).toEqual(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(2);
-      const packageNames = res.body.map(app => app.packageName);
-      expect(packageNames).toContain('com.b.app');
-      expect(packageNames).toContain('com.c.app');
-    });
+    let appsInDb = await InstalledApp.find({ device: testDeviceId });
+    expect(appsInDb.length).toBe(2);
+
+    // Updated Sync
+    await request(app)
+      .post(`/api/devices/${testDeviceId}/apps/sync`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ apps: updatedApps })
+      .expect(200);
+
+    appsInDb = await InstalledApp.find({ device: testDeviceId }).lean();
+    expect(appsInDb.length).toBe(2);
+    const packageNames = appsInDb.map(app => app.packageName);
+    expect(packageNames).not.toContain('com.a.app');
+    expect(packageNames).toContain('com.c.app');
   });
 });

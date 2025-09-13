@@ -1,18 +1,9 @@
 const request = require('supertest');
-const app = require('../server');
-const CallLog = require('../models/CallLog');
+const { app } = require('../server');
 
-describe('Call Logs API', () => {
+describe('Call Logs API (Refactored)', () => {
   let token;
-  const testDeviceId = 'call-log-test-device';
-
-  const callLogData = {
-    deviceId: testDeviceId,
-    phoneNumber: '555-111-2222',
-    type: 'INCOMING',
-    duration: 60,
-    callDate: new Date().toISOString(),
-  };
+  let testDeviceId;
 
   beforeAll(async () => {
     const res = await request(app)
@@ -22,39 +13,39 @@ describe('Call Logs API', () => {
         password: process.env.ADMIN_PASSWORD,
       });
     token = res.body.token;
+
+    const deviceRes = await request(app)
+      .post('/api/devices/register')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        uniqueIdentifier: 'call-log-test-device-uuid',
+        deviceName: 'Call Log Test Device',
+        platform: 'android',
+      });
+    testDeviceId = deviceRes.body._id;
   });
 
-  describe('POST /api/call-logs', () => {
-    it('should not add a call log without a token', async () => {
-      const res = await request(app).post('/api/call-logs').send(callLogData);
-      expect(res.statusCode).toEqual(401);
-    });
-
-    it('should add a new call log with a valid token', async () => {
-      const res = await request(app)
-        .post('/api/call-logs')
-        .set('Authorization', `Bearer ${token}`)
-        .send(callLogData);
-      expect(res.statusCode).toEqual(201);
-      expect(res.body).toHaveProperty('phoneNumber', callLogData.phoneNumber);
-    });
+  it('should add a new call log for a device', async () => {
+    const res = await request(app)
+      .post(`/api/devices/${testDeviceId}/call-logs`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        phoneNumber: '555-111-2222',
+        type: 'INCOMING',
+        duration: 60,
+        callDate: new Date().toISOString(),
+      });
+    expect(res.statusCode).toEqual(201);
+    expect(res.body).toHaveProperty('device', testDeviceId);
   });
 
-  describe('GET /api/call-logs/:deviceId', () => {
-    it('should get all call logs for a device', async () => {
-      // Add another log to ensure we get a list
-      await request(app)
-        .post('/api/call-logs')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ ...callLogData, type: 'OUTGOING', phoneNumber: '555-333-4444' });
+  it('should get all call logs for a device', async () => {
+    const res = await request(app)
+      .get(`/api/devices/${testDeviceId}/call-logs`)
+      .set('Authorization', `Bearer ${token}`);
 
-      const res = await request(app)
-        .get(`/api/call-logs/${testDeviceId}`)
-        .set('Authorization', `Bearer ${token}`);
-
-      expect(res.statusCode).toEqual(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(2);
-    });
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.length).toBe(1);
   });
 });

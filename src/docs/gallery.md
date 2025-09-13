@@ -8,13 +8,13 @@ This document outlines the API endpoints for managing gallery items. All endpoin
 
 Retrieves a list of all gallery item metadata for a specific device.
 
-- **URL:** `/api/gallery/:deviceId`
+- **URL:** `/api/devices/:deviceId/gallery`
 - **Method:** `GET`
 - **Access:** `Private`
 
 ### URL Parameters
 
-- `deviceId` (String, required): The ID of the device to fetch gallery items for.
+- `deviceId` (String, required): The `_id` of the device to fetch gallery items for.
 
 ### Query Parameters
 
@@ -56,17 +56,19 @@ Retrieves a list of all gallery item metadata for a specific device.
 
 ## 2. Add a New Gallery Item
 
-Adds metadata for a new gallery item to the database.
+Adds metadata for a new gallery item to the database for a specific device.
 
-- **URL:** `/api/gallery`
+- **URL:** `/api/devices/:deviceId/gallery`
 - **Method:** `POST`
 - **Access:** `Private`
+
+### URL Parameters
+- `deviceId` (String, required): The `_id` of the device.
 
 ### Request Body
 
 ```json
 {
-  "deviceId": "device-123",
   "imageUrl": "https://example.com/new_image.png",
   "caption": "Fun at the beach",
   "sourceApp": "TikTok",
