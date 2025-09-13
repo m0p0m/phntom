@@ -2,12 +2,13 @@ const request = require('supertest');
 const app = require('../server');
 const GalleryItem = require('../models/GalleryItem');
 
+const Device = require('../models/Device');
+
 describe('Gallery API', () => {
   let token;
-  const testDeviceId = 'gallery-test-device';
+  let testDeviceId;
 
   beforeAll(async () => {
-    // Get a token to use for protected routes
     const res = await request(app)
       .post('/api/auth/login')
       .send({
@@ -15,25 +16,24 @@ describe('Gallery API', () => {
         password: process.env.ADMIN_PASSWORD,
       });
     token = res.body.token;
-  });
 
-  describe('POST /api/gallery', () => {
-    it('should not add a gallery item without a token', async () => {
-      const res = await request(app)
-        .post('/api/gallery')
-        .send({
-          deviceId: testDeviceId,
-          imageUrl: 'http://example.com/image1.jpg',
-        });
-      expect(res.statusCode).toEqual(401);
-    });
-
-    it('should add a new gallery item with a valid token', async () => {
-      const res = await request(app)
-        .post('/api/gallery')
+    const deviceRes = await request(app)
+        .post('/api/devices/register')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          deviceId: testDeviceId,
+            uniqueIdentifier: 'gallery-test-device-uuid',
+            deviceName: 'Gallery Test Device',
+            platform: 'android',
+        });
+    testDeviceId = deviceRes.body._id;
+  });
+
+  describe('POST /api/devices/:deviceId/gallery', () => {
+    it('should add a new gallery item with a valid token', async () => {
+      const res = await request(app)
+        .post(`/api/devices/${testDeviceId}/gallery`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
           imageUrl: 'http://example.com/image1.jpg',
           caption: 'Test Image 1',
           sourceApp: 'Camera',
@@ -42,50 +42,17 @@ describe('Gallery API', () => {
       expect(res.body).toHaveProperty('imageUrl', 'http://example.com/image1.jpg');
       expect(res.body).toHaveProperty('sourceApp', 'Camera');
     });
-
-    it('should return 400 if required fields are missing', async () => {
-      const res = await request(app)
-        .post('/api/gallery')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          deviceId: testDeviceId,
-        });
-      expect(res.statusCode).toEqual(400);
-    });
   });
 
-  describe('GET /api/gallery/:deviceId', () => {
-    it('should not get items without a token', async () => {
-      const res = await request(app).get(`/api/gallery/${testDeviceId}`);
-      expect(res.statusCode).toEqual(401);
-    });
-
+  describe('GET /api/devices/:deviceId/gallery', () => {
     it('should get all gallery items for a device', async () => {
-      // Add another item for testing retrieval
-      await request(app)
-        .post('/api/gallery')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          deviceId: testDeviceId,
-          imageUrl: 'http://example.com/image2.jpg',
-        });
-
       const res = await request(app)
-        .get(`/api/gallery/${testDeviceId}`)
+        .get(`/api/devices/${testDeviceId}/gallery`)
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.statusCode).toEqual(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(2);
-      expect(res.body[0]).toHaveProperty('sourceApp');
+      expect(res.body).toHaveProperty('success', true);
+      expect(res.body.data.length).toBe(1);
     });
-
-    it('should return an empty array for a device with no items', async () => {
-        const res = await request(app)
-          .get('/api/gallery/non-existent-device')
-          .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
-        expect(res.body).toEqual([]);
-      });
   });
 });

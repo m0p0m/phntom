@@ -9,6 +9,10 @@ const app = express();
 // Body parser
 app.use(express.json());
 
+// Set static folder
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 //- ROUTES
 
 app.get('/', (req, res) => {
@@ -17,12 +21,7 @@ app.get('/', (req, res) => {
 
 // Mount routers
 app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/contacts', require('./routes/contactRoutes'));
-app.use('/api/gallery', require('./routes/galleryRoutes'));
 app.use('/api/location', require('./routes/locationRoutes'));
-app.use('/api/files', require('./routes/fileRoutes'));
-app.use('/api/apps', require('./routes/appRoutes'));
-app.use('/api/call-logs', require('./routes/callLogRoutes'));
 app.use('/api/commands', require('./routes/commandRoutes'));
 app.use('/api/devices', require('./routes/deviceRoutes'));
 

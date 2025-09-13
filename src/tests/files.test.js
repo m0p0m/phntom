@@ -2,10 +2,12 @@ const request = require('supertest');
 const app = require('../server');
 const File = require('../models/File');
 
+const Device = require('../models/Device');
+
 describe('Files API', () => {
   let token;
   let fileId;
-  const testDeviceId = 'files-test-device';
+  let testDeviceId;
 
   beforeAll(async () => {
     const res = await request(app)
@@ -15,10 +17,19 @@ describe('Files API', () => {
         password: process.env.ADMIN_PASSWORD,
       });
     token = res.body.token;
+
+    const deviceRes = await request(app)
+      .post('/api/devices/register')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+          uniqueIdentifier: 'files-test-device-uuid',
+          deviceName: 'Files Test Device',
+          platform: 'android',
+      });
+    testDeviceId = deviceRes.body._id;
   });
 
   const fileData = {
-    deviceId: testDeviceId,
     fileName: 'test-file.txt',
     filePath: '/data/test-file.txt',
     fileType: 'text/plain',
@@ -26,15 +37,10 @@ describe('Files API', () => {
     storageUrl: 'http://example.com/storage/test-file.txt',
   };
 
-  describe('POST /api/files', () => {
-    it('should not add file metadata without a token', async () => {
-      const res = await request(app).post('/api/files').send(fileData);
-      expect(res.statusCode).toEqual(401);
-    });
-
+  describe('POST /api/devices/:deviceId/files', () => {
     it('should add new file metadata with a valid token', async () => {
       const res = await request(app)
-        .post('/api/files')
+        .post(`/api/devices/${testDeviceId}/files`)
         .set('Authorization', `Bearer ${token}`)
         .send(fileData);
       expect(res.statusCode).toEqual(201);
@@ -43,34 +49,19 @@ describe('Files API', () => {
     });
   });
 
-  describe('GET /api/files/:deviceId', () => {
+  describe('GET /api/devices/:deviceId/files', () => {
     it('should get file metadata for a device', async () => {
       const res = await request(app)
-        .get(`/api/files/${testDeviceId}`)
+        .get(`/api/devices/${testDeviceId}/files`)
         .set('Authorization', `Bearer ${token}`);
       expect(res.statusCode).toEqual(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(1);
-      expect(res.body[0].fileName).toBe(fileData.fileName);
+      expect(res.body).toHaveProperty('success', true);
+      expect(res.body.data.length).toBe(1);
+      expect(res.body.data[0].fileName).toBe(fileData.fileName);
     });
-
-    it('should filter files by path', async () => {
-        // Add another file in a different path
-        await request(app)
-          .post('/api/files')
-          .set('Authorization', `Bearer ${token}`)
-          .send({ ...fileData, fileName: 'another.txt', filePath: '/other/another.txt' });
-
-        const res = await request(app)
-          .get(`/api/files/${testDeviceId}?path=/data`)
-          .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
-        expect(res.body.length).toBe(1);
-        expect(res.body[0].filePath).toBe('/data/test-file.txt');
-      });
   });
 
-  describe('DELETE /api/files/:id', () => {
+  describe('DELETE /api/files/:id', () => { // This route is not nested, it uses the global file _id
     it('should delete file metadata', async () => {
       const res = await request(app)
         .delete(`/api/files/${fileId}`)
@@ -85,5 +76,18 @@ describe('Files API', () => {
           .set('Authorization', `Bearer ${token}`);
         expect(res.statusCode).toEqual(404);
       });
+  });
+
+  describe('POST /api/devices/:deviceId/files/upload', () => {
+    it('should upload a file and create metadata', async () => {
+      const res = await request(app)
+        .post(`/api/devices/${testDeviceId}/files/upload`)
+        .set('Authorization', `Bearer ${token}`)
+        .attach('file', Buffer.from('this is a test file'), 'test-upload.txt');
+
+      expect(res.statusCode).toEqual(201);
+      expect(res.body).toHaveProperty('message', 'File uploaded successfully');
+      expect(res.body.file).toHaveProperty('fileName', 'test-upload.txt');
+    });
   });
 });

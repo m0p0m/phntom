@@ -2,12 +2,16 @@ const request = require('supertest');
 const app = require('../server');
 const Contact = require('../models/Contact');
 
+const Device = require('../models/Device');
+
 describe('Contacts API', () => {
   let token;
   let contactId;
+  let testDeviceId;
 
-  // Before running tests, get a valid token
+  // Before running tests, register a device and get a token
   beforeAll(async () => {
+    // Get Token
     const res = await request(app)
       .post('/api/auth/login')
       .send({
@@ -15,29 +19,38 @@ describe('Contacts API', () => {
         password: process.env.ADMIN_PASSWORD,
       });
     token = res.body.token;
+
+    // Register a device to get a valid ID
+    const deviceRes = await request(app)
+        .post('/api/devices/register')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+            uniqueIdentifier: 'contact-test-device-uuid',
+            deviceName: 'Contact Test Device',
+            platform: 'android',
+        });
+    testDeviceId = deviceRes.body._id;
   });
 
   // Test creating a contact
-  describe('POST /api/contacts', () => {
+  describe('POST /api/devices/:deviceId/contacts', () => {
     it('should not create a contact without a token', async () => {
       const res = await request(app)
-        .post('/api/contacts')
+        .post(`/api/devices/${testDeviceId}/contacts`)
         .send({
           name: 'Test User',
           phoneNumber: '111222333',
-          deviceId: 'test-device-1',
         });
       expect(res.statusCode).toEqual(401);
     });
 
     it('should create a new contact with a valid token', async () => {
       const res = await request(app)
-        .post('/api/contacts')
+        .post(`/api/devices/${testDeviceId}/contacts`)
         .set('Authorization', `Bearer ${token}`)
         .send({
           name: 'Test User',
           phoneNumber: '111222333',
-          deviceId: 'test-device-1',
         });
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('name', 'Test User');
@@ -46,7 +59,7 @@ describe('Contacts API', () => {
 
     it('should not create a contact with missing fields', async () => {
         const res = await request(app)
-          .post('/api/contacts')
+          .post(`/api/devices/${testDeviceId}/contacts`)
           .set('Authorization', `Bearer ${token}`)
           .send({
             name: 'Incomplete User',
@@ -56,10 +69,10 @@ describe('Contacts API', () => {
   });
 
   // Test getting contacts
-  describe('GET /api/contacts', () => {
+  describe('GET /api/devices/:deviceId/contacts', () => {
     it('should get all contacts with paginated results', async () => {
       const res = await request(app)
-        .get('/api/contacts')
+        .get(`/api/devices/${testDeviceId}/contacts`)
         .set('Authorization', `Bearer ${token}`);
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('success', true);

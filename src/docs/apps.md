@@ -8,12 +8,12 @@ This document outlines the API endpoints for managing a device's list of install
 
 Retrieves the last known list of installed applications for a specific device.
 
-- **URL:** `/api/apps/:deviceId`
+- **URL:** `/api/devices/:deviceId/apps`
 - **Method:** `GET`
 - **Access:** `Private`
 
 ### URL Parameters
-- `deviceId` (String, required): The ID of the device.
+- `deviceId` (String, required): The `_id` of the device.
 
 ### Success Response
 - **Code:** `200 OK`
@@ -40,15 +40,17 @@ Retrieves the last known list of installed applications for a specific device.
 
 Receives a complete list of installed applications from a device. The backend will then synchronize its database with this list by adding new apps, updating existing ones, and removing any apps that are no longer on the device.
 
-- **URL:** `/api/apps/sync`
+- **URL:** `/api/devices/:deviceId/apps/sync`
 - **Method:** `POST`
 - **Access:** `Private`
+
+### URL Parameters
+- `deviceId` (String, required): The `_id` of the device.
 
 ### Request Body
 
 ```json
 {
-  "deviceId": "device-123",
   "apps": [
     {
       "appName": "Example App",

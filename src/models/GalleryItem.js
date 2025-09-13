@@ -2,9 +2,10 @@ const mongoose = require('mongoose');
 
 const galleryItemSchema = new mongoose.Schema(
   {
-    deviceId: {
-      type: String,
-      required: [true, 'Please add a device ID'],
+    device: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Device',
+      required: true,
     },
     imageUrl: {
       type: String,

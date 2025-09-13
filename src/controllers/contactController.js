@@ -3,31 +3,41 @@ const Contact = require('../models/Contact');
 // @desc    Get all contacts
 // @route   GET /api/contacts
 // @access  Private
+const Device = require('../models/Device');
+
 const getContacts = async (req, res) => {
+  // res.advancedResults is provided by the middleware
   res.status(200).json(res.advancedResults);
 };
 
-// @desc    Create a contact
-// @route   POST /api/contacts
+// @desc    Create a contact for a specific device
+// @route   POST /api/devices/:deviceId/contacts
 // @access  Private
 const createContact = async (req, res) => {
-  const { name, phoneNumber, deviceId } = req.body;
+  const { name, phoneNumber } = req.body;
+  // deviceId is now from the URL params
+  const deviceId = req.params.deviceId;
 
-  if (!name || !phoneNumber || !deviceId) {
-    return res.status(400).json({ message: 'Please add all fields' });
+  if (!name || !phoneNumber) {
+    return res.status(400).json({ message: 'Please provide name and phoneNumber' });
   }
 
   try {
+    const device = await Device.findById(deviceId);
+    if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+    }
+
     const contact = await Contact.create({
       name,
       phoneNumber,
-      deviceId,
+      device: deviceId, // Use the actual ObjectId
     });
+
     res.status(201).json(contact);
   } catch (error) {
-    // Handle duplicate key error
     if (error.code === 11000) {
-      return res.status(400).json({ message: 'This phone number already exists for this device.' });
+      return res.status(400).json({ message: `A contact with phone number '${phoneNumber}' already exists for this device.` });
     }
     res.status(500).json({ message: 'Server Error', error: error.message });
   }

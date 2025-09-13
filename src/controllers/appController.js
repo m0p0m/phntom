@@ -1,40 +1,43 @@
 const InstalledApp = require('../models/InstalledApp');
 
+const Device = require('../models/Device');
+
 // @desc    Get all installed apps for a device
-// @route   GET /api/apps/:deviceId
+// @route   GET /api/devices/:deviceId/apps
 // @access  Private
 const getInstalledApps = async (req, res) => {
-  try {
-    const apps = await InstalledApp.find({ deviceId: req.params.deviceId }).sort({ appName: 1 });
-    res.status(200).json(apps);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
-  }
+  // This route should now use the advancedResults middleware
+  // The middleware will handle filtering by deviceId from the params
+  res.status(200).json(res.advancedResults);
 };
 
 // @desc    Syncs the list of installed apps from a device
-// @route   POST /api/apps/sync
+// @route   POST /api/devices/:deviceId/apps/sync
 // @access  Private
 const syncInstalledApps = async (req, res) => {
-  const { deviceId, apps } = req.body;
+  const { apps } = req.body;
+  const { deviceId } = req.params;
 
-  if (!deviceId || !Array.isArray(apps)) {
-    return res.status(400).json({ message: 'Please provide a deviceId and an array of apps' });
+  if (!Array.isArray(apps)) {
+    return res.status(400).json({ message: 'Please provide an array of apps' });
   }
 
   try {
+    const device = await Device.findById(deviceId);
+    if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+    }
+
     const currentPackages = apps.map(app => app.packageName);
 
-    // 1. Delete apps that are no longer installed
     await InstalledApp.deleteMany({
-      deviceId: deviceId,
+      device: deviceId,
       packageName: { $nin: currentPackages },
     });
 
-    // 2. Upsert all apps from the device payload
     const upsertOperations = apps.map(app => ({
       updateOne: {
-        filter: { deviceId: deviceId, packageName: app.packageName },
+        filter: { device: deviceId, packageName: app.packageName },
         update: {
           $set: {
             appName: app.appName,

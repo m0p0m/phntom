@@ -1,35 +1,33 @@
 const File = require('../models/File');
 
+const Device = require('../models/Device');
+
 // @desc    Get all file metadata for a specific device
-// @route   GET /api/files/:deviceId
+// @route   GET /api/devices/:deviceId/files
 // @access  Private
 const getFiles = async (req, res) => {
-  // The middleware now handles filtering by deviceId from params
-  // and any other query params like filePath
-  if (req.query.path) {
-    // The middleware needs to be aware of this specific logic
-    // Let's adjust the middleware to handle regex on specific fields
-    // For now, this controller logic is simplified, assuming middleware handles it.
-    // The middleware already handles general query params, so a query like
-    // ?filePath[regex]=^/DCIM&filePath[options]=i would work if we enhance it.
-    // Let's simplify the controller and enhance the middleware later if needed.
-  }
   res.status(200).json(res.advancedResults);
 };
 
-// @desc    Add file metadata
-// @route   POST /api/files
+// @desc    Add file metadata for a specific device
+// @route   POST /api/devices/:deviceId/files
 // @access  Private
 const addFile = async (req, res) => {
-  const { deviceId, fileName, filePath, fileType, size, storageUrl } = req.body;
+  const { fileName, filePath, fileType, size, storageUrl } = req.body;
+  const { deviceId } = req.params;
 
-  if (!deviceId || !fileName || !filePath || !fileType || !size || !storageUrl) {
+  if (!fileName || !filePath || !fileType || !size || !storageUrl) {
     return res.status(400).json({ message: 'Please provide all required fields' });
   }
 
   try {
+    const device = await Device.findById(deviceId);
+    if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+    }
+
     const file = await File.create({
-      deviceId,
+      device: deviceId,
       fileName,
       filePath,
       fileType,
@@ -63,8 +61,52 @@ const deleteFile = async (req, res) => {
     }
   };
 
+const upload = require('../config/upload');
+
+const uploadFile = (req, res) => {
+    upload(req, res, async (err) => {
+        if(err){
+            return res.status(400).json({ message: err });
+        }
+        if(req.file == undefined){
+            return res.status(400).json({ message: 'Error: No File Selected!' });
+        }
+
+        const { deviceId } = req.params;
+        const { originalname, mimetype, size, path: filePathOnServer } = req.file;
+
+        try {
+            const device = await Device.findById(deviceId);
+            if (!device) {
+                return res.status(404).json({ message: 'Device not found' });
+            }
+
+            const fileMetadata = await File.create({
+                device: deviceId,
+                fileName: originalname,
+                // We'll use the server path as the 'filePath' for now
+                // In a real system, this might be different
+                filePath: `/${originalname}`,
+                fileType: mimetype,
+                size: size,
+                // The URL to access the file on our server
+                storageUrl: `/uploads/${req.file.filename}`
+            });
+
+            res.status(201).json({
+                message: 'File uploaded successfully',
+                file: fileMetadata
+            });
+
+        } catch (error) {
+            res.status(500).json({ message: 'Server Error', error: error.message });
+        }
+    });
+};
+
 module.exports = {
   getFiles,
   addFile,
   deleteFile,
+  uploadFile,
 };

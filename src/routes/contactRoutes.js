@@ -1,5 +1,6 @@
 const express = require('express');
-const router = express.Router();
+// mergeParams allows us to access params from parent routers (e.g., :deviceId)
+const router = express.Router({ mergeParams: true });
 const {
   getContacts,
   createContact,

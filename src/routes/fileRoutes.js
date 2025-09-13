@@ -1,13 +1,17 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 const {
   getFiles,
   addFile,
   deleteFile,
+  uploadFile,
 } = require('../controllers/fileController');
 const { protect } = require('../middlewares/authMiddleware');
 
 router.use(protect);
+
+router.route('/upload')
+    .post(uploadFile);
 
 router.route('/')
   .post(addFile);
