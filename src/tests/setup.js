@@ -13,9 +13,12 @@ beforeAll(async () => {
   await mongoose.connect(uri);
 });
 
+const { io } = require('../server');
+
 afterAll(async () => {
   await mongoose.connection.disconnect();
   await mongod.stop();
+  io.close(); // Close the socket server
 });
 
 // Optional: Clear all data between tests
