@@ -7,10 +7,24 @@ const { Server } = require("socket.io");
 // Connect to database
 connectDB();
 
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
 const app = express();
 
 // Body parser
 app.use(express.json());
+
+// Set security headers
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 mins
+  max: 100 // 100 requests per 10 mins
+});
+app.use('/api/', limiter);
+
 
 // Set static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
