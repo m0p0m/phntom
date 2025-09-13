@@ -1,5 +1,4 @@
 const CallLog = require('../models/CallLog');
-
 const Device = require('../models/Device');
 
 // @desc    Get all call logs for a device
@@ -14,28 +13,18 @@ const getCallLogs = async (req, res) => {
 // @access  Private
 const addCallLog = async (req, res) => {
   const { phoneNumber, type, duration, callDate } = req.body;
-  const { deviceId } = req.params;
+  req.body.device = req.params.deviceId;
 
-  if (!phoneNumber || !type || !callDate) {
-    return res.status(400).json({ message: 'Please provide all required fields' });
+  const device = await Device.findById(req.params.deviceId);
+  if (!device) {
+    return res.status(404).json({ message: 'Device not found' });
   }
 
   try {
-    const device = await Device.findById(deviceId);
-    if (!device) {
-        return res.status(404).json({ message: 'Device not found' });
-    }
-
-    const log = await CallLog.create({
-      device: deviceId,
-      phoneNumber,
-      type,
-      duration,
-      callDate,
-    });
+    const log = await CallLog.create(req.body);
     res.status(201).json(log);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    res.status(400).json({ message: 'Error adding call log', error: error.message });
   }
 };
 

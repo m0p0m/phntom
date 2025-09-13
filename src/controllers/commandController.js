@@ -1,15 +1,21 @@
 const Command = require('../models/Command');
+const Device = require('../models/Device');
 
 // @desc    Queue a new command for a device
-// @route   POST /api/commands/:deviceId
+// @route   POST /api/devices/:deviceId/commands
 // @access  Private (Admin)
 const queueCommand = async (req, res) => {
   const { type, payload } = req.body;
   const { deviceId } = req.params;
 
   try {
+    const device = await Device.findById(deviceId);
+    if (!device) {
+      return res.status(404).json({ message: 'Device not found' });
+    }
+
     const command = await Command.create({
-      deviceId,
+      device: deviceId,
       type,
       payload,
       status: 'PENDING',
@@ -21,18 +27,14 @@ const queueCommand = async (req, res) => {
 };
 
 // @desc    Device fetches its pending commands
-// @route   GET /api/commands/:deviceId/pending
+// @route   GET /api/devices/:deviceId/commands/pending
 // @access  Private (Device - could be a different auth mechanism in reality)
 const getPendingCommands = async (req, res) => {
   try {
     const commands = await Command.find({
-      deviceId: req.params.deviceId,
+      device: req.params.deviceId,
       status: 'PENDING',
     }).sort('createdAt');
-
-    // Optionally, update status to 'SENT'
-    // const commandIds = commands.map(cmd => cmd._id);
-    // await Command.updateMany({ _id: { $in: commandIds } }, { $set: { status: 'SENT' } });
 
     res.status(200).json(commands);
   } catch (error) {

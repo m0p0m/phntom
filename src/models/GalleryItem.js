@@ -28,6 +28,6 @@ const galleryItemSchema = new mongoose.Schema(
   }
 );
 
-galleryItemSchema.index({ deviceId: 1, createdAt: -1 });
+galleryItemSchema.index({ device: 1, createdAt: -1 });
 
 module.exports = mongoose.model('GalleryItem', galleryItemSchema);

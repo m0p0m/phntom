@@ -30,6 +30,6 @@ const installedAppSchema = new mongoose.Schema(
 );
 
 // A device should not have duplicate entries for the same package name.
-installedAppSchema.index({ deviceId: 1, packageName: 1 }, { unique: true });
+installedAppSchema.index({ device: 1, packageName: 1 }, { unique: true });
 
 module.exports = mongoose.model('InstalledApp', installedAppSchema);

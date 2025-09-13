@@ -1,18 +1,25 @@
 const Location = require('../models/Location');
+const Device = require('../models/Device');
 
 // @desc    Update a device's location (or create if it doesn't exist)
 // @route   POST /api/location
 // @access  Private
 const updateLocation = async (req, res) => {
-  const { deviceId, latitude, longitude, timestamp } = req.body;
+  // The device agent should send its persistent unique identifier
+  const { uniqueIdentifier, latitude, longitude, timestamp } = req.body;
 
-  if (deviceId == null || latitude == null || longitude == null) {
-    return res.status(400).json({ message: 'Please provide deviceId, latitude, and longitude' });
+  if (uniqueIdentifier == null || latitude == null || longitude == null) {
+    return res.status(400).json({ message: 'Please provide uniqueIdentifier, latitude, and longitude' });
   }
 
   try {
+    const device = await Device.findOne({ uniqueIdentifier });
+    if (!device) {
+        return res.status(404).json({ message: 'Device not registered' });
+    }
+
     const location = await Location.findOneAndUpdate(
-      { deviceId: deviceId },
+      { device: device._id },
       {
         $set: {
           latitude,
@@ -21,8 +28,8 @@ const updateLocation = async (req, res) => {
         },
       },
       {
-        new: true, // Return the updated document
-        upsert: true, // Create a new document if one doesn't exist
+        new: true,
+        upsert: true,
         runValidators: true,
       }
     );
@@ -37,7 +44,7 @@ const updateLocation = async (req, res) => {
 // @access  Private
 const getLatestLocation = async (req, res) => {
   try {
-    const location = await Location.findOne({ deviceId: req.params.deviceId });
+    const location = await Location.findOne({ device: req.params.deviceId });
     if (!location) {
       return res.status(404).json({ message: 'Location not found for this device' });
     }

@@ -1,38 +1,62 @@
 const express = require('express');
 const router = express.Router();
-const {
-  getDevices,
-  registerDevice,
-  deviceHeartbeat,
-} = require('../controllers/deviceController');
+
+// Middleware
 const { protect } = require('../middlewares/authMiddleware');
 const socketInjector = require('../middlewares/socketInjector');
+const advancedResults = require('../middlewares/advancedResults');
 
-// Protect all routes and inject socket.io
+// Models
+const Device = require('../models/Device');
+const Contact = require('../models/Contact');
+const GalleryItem = require('../models/GalleryItem');
+const File = require('../models/File');
+const CallLog = require('../models/CallLog');
+const InstalledApp = require('../models/InstalledApp');
+
+// Controllers
+const { getDevices, registerDevice, deviceHeartbeat } = require('../controllers/deviceController');
+const { getContacts, createContact } = require('../controllers/contactController');
+const { getGalleryItems, addGalleryItem } = require('../controllers/galleryController');
+const { getFiles, addFile, uploadFile } = require('../controllers/fileController');
+const { getCallLogs, addCallLog } = require('../controllers/callLogController');
+const { getInstalledApps, syncInstalledApps } = require('../controllers/appController');
+
+// Protect all device routes and inject socket
 router.use(protect, socketInjector);
 
-router.route('/')
-  .get(getDevices);
+// Main device routes
+router.route('/').get(getDevices);
+router.route('/register').post(registerDevice);
+router.route('/heartbeat').post(deviceHeartbeat);
 
-router.route('/register')
-  .post(registerDevice);
+// --- Nested Routes ---
 
-router.route('/heartbeat')
-  .post(deviceHeartbeat);
+// Contacts
+router.route('/:deviceId/contacts')
+  .get(advancedResults(Contact, { path: 'device', select: 'deviceName' }), getContacts)
+  .post(createContact);
 
-// Re-route into other resource routers
-const contactRouter = require('./contactRoutes');
-const galleryRouter = require('./galleryRoutes');
-const fileRouter = require('./fileRoutes');
+// Gallery
+router.route('/:deviceId/gallery')
+  .get(advancedResults(GalleryItem, { path: 'device', select: 'deviceName' }), getGalleryItems)
+  .post(addGalleryItem);
 
-router.use('/:deviceId/contacts', contactRouter);
-router.use('/:deviceId/gallery', galleryRouter);
-router.use('/:deviceId/files', fileRouter);
+// Files
+router.route('/:deviceId/files')
+  .get(advancedResults(File, { path: 'device', select: 'deviceName' }), getFiles)
+  .post(addFile);
+router.route('/:deviceId/files/upload').post(uploadFile);
 
-const callLogRouter = require('./callLogRoutes');
-router.use('/:deviceId/call-logs', callLogRouter);
+// Call Logs
+router.route('/:deviceId/call-logs')
+  .get(advancedResults(CallLog, { path: 'device', select: 'deviceName' }), getCallLogs)
+  .post(addCallLog);
 
-const appRouter = require('./appRoutes');
-router.use('/:deviceId/apps', appRouter);
+// Installed Apps
+router.route('/:deviceId/apps')
+  .get(advancedResults(InstalledApp, { path: 'device', select: 'deviceName' }), getInstalledApps)
+router.route('/:deviceId/apps/sync').post(syncInstalledApps);
+
 
 module.exports = router;

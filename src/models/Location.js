@@ -2,8 +2,9 @@ const mongoose = require('mongoose');
 
 const locationSchema = new mongoose.Schema(
   {
-    deviceId: {
-      type: String,
+    device: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Device',
       required: true,
       unique: true, // Each device has only one location document
       index: true,

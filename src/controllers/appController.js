@@ -1,13 +1,10 @@
 const InstalledApp = require('../models/InstalledApp');
-
 const Device = require('../models/Device');
 
 // @desc    Get all installed apps for a device
 // @route   GET /api/devices/:deviceId/apps
 // @access  Private
 const getInstalledApps = async (req, res) => {
-  // This route should now use the advancedResults middleware
-  // The middleware will handle filtering by deviceId from the params
   res.status(200).json(res.advancedResults);
 };
 
@@ -43,6 +40,7 @@ const syncInstalledApps = async (req, res) => {
             appName: app.appName,
             version: app.version,
             installedAt: app.installedAt,
+            device: deviceId,
           },
         },
         upsert: true,

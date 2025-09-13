@@ -1,10 +1,8 @@
 const request = require('supertest');
-const app = require('../server');
-const CallLog = require('../models/CallLog');
-
+const { app } = require('../server');
 const Device = require('../models/Device');
 
-describe('Call Logs API', () => {
+describe('Call Logs API (Refactored)', () => {
   let token;
   let testDeviceId;
 
@@ -28,33 +26,29 @@ describe('Call Logs API', () => {
       .post('/api/devices/register')
       .set('Authorization', `Bearer ${token}`)
       .send({
-          uniqueIdentifier: 'call-log-test-device-uuid',
-          deviceName: 'Call Log Test Device',
-          platform: 'android',
+        uniqueIdentifier: 'call-log-test-device-uuid',
+        deviceName: 'Call Log Test Device',
+        platform: 'android',
       });
     testDeviceId = deviceRes.body._id;
   });
 
-  describe('POST /api/devices/:deviceId/call-logs', () => {
-    it('should add a new call log with a valid token', async () => {
-      const res = await request(app)
-        .post(`/api/devices/${testDeviceId}/call-logs`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(callLogData);
-      expect(res.statusCode).toEqual(201);
-      expect(res.body).toHaveProperty('phoneNumber', callLogData.phoneNumber);
-    });
+  it('should add a new call log for a device', async () => {
+    const res = await request(app)
+      .post(`/api/devices/${testDeviceId}/call-logs`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(callLogData);
+    expect(res.statusCode).toEqual(201);
+    expect(res.body).toHaveProperty('phoneNumber', callLogData.phoneNumber);
   });
 
-  describe('GET /api/devices/:deviceId/call-logs', () => {
-    it('should get all call logs for a device', async () => {
-      const res = await request(app)
-        .get(`/api/devices/${testDeviceId}/call-logs`)
-        .set('Authorization', `Bearer ${token}`);
+  it('should get all call logs for a device', async () => {
+    const res = await request(app)
+      .get(`/api/devices/${testDeviceId}/call-logs`)
+      .set('Authorization', `Bearer ${token}`);
 
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('success', true);
-      expect(res.body.data.length).toBe(1);
-    });
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.length).toBe(1);
   });
 });
