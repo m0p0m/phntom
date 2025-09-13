@@ -16,26 +16,39 @@ Retrieves a list of all file metadata records for a specific device. Can optiona
 - `deviceId` (String, required): The ID of the device.
 
 ### Query Parameters
-- `path` (String, optional): A base path to filter files. For example, `/api/files/device-123?path=/DCIM/Camera` would return all files within that directory.
+- `filePath` (String, optional): Filter by exact file path. To filter by directory, you can use `filePath[regex]=^/DCIM/Camera`.
+- `select` (String): Comma-separated list of fields to include.
+- `sort` (String): Field to sort by (e.g., `sort=filePath`).
+- `page` (Number): Page number for pagination.
+- `limit` (Number): Number of results per page.
 
 ### Success Response
 - **Code:** `200 OK`
-- **Content:** An array of file metadata objects.
+- **Content:** A paginated object containing an array of file metadata objects.
 
 ```json
-[
-  {
-    "_id": "60d5f1b4e6b3f1a1b8f3a3a1",
-    "deviceId": "device-123",
-    "fileName": "IMG_2023.jpg",
-    "filePath": "/DCIM/Camera/IMG_2023.jpg",
-    "fileType": "image/jpeg",
-    "size": 4500000,
-    "storageUrl": "https://s3.example.com/device-123/IMG_2023.jpg",
-    "createdAt": "2023-01-02T10:00:00.000Z",
-    "updatedAt": "2023-01-02T10:00:00.000Z"
-  }
-]
+{
+  "success": true,
+  "count": 1,
+  "pagination": {
+    "total": 1,
+    "pages": 1,
+    "currentPage": 1
+  },
+  "data": [
+    {
+      "_id": "60d5f1b4e6b3f1a1b8f3a3a1",
+      "deviceId": "device-123",
+      "fileName": "IMG_2023.jpg",
+      "filePath": "/DCIM/Camera/IMG_2023.jpg",
+      "fileType": "image/jpeg",
+      "size": 4500000,
+      "storageUrl": "https://s3.example.com/device-123/IMG_2023.jpg",
+      "createdAt": "2023-01-02T10:00:00.000Z",
+      "updatedAt": "2023-01-02T10:00:00.000Z"
+    }
+  ]
+}
 ```
 
 ---

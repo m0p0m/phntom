@@ -12,7 +12,10 @@ router.use(protect);
 router.route('/')
   .post(addGalleryItem);
 
+const GalleryItem = require('../models/GalleryItem');
+const advancedResults = require('../middlewares/advancedResults');
+
 router.route('/:deviceId')
-  .get(getGalleryItems);
+  .get(advancedResults(GalleryItem), getGalleryItems);
 
 module.exports = router;

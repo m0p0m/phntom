@@ -4,12 +4,7 @@ const GalleryItem = require('../models/GalleryItem');
 // @route   GET /api/gallery/:deviceId
 // @access  Private
 const getGalleryItems = async (req, res) => {
-  try {
-    const items = await GalleryItem.find({ deviceId: req.params.deviceId }).sort({ createdAt: -1 });
-    res.status(200).json(items);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
-  }
+  res.status(200).json(res.advancedResults);
 };
 
 // @desc    Add a gallery item

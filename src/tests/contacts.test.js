@@ -57,13 +57,15 @@ describe('Contacts API', () => {
 
   // Test getting contacts
   describe('GET /api/contacts', () => {
-    it('should get all contacts', async () => {
+    it('should get all contacts with paginated results', async () => {
       const res = await request(app)
         .get('/api/contacts')
         .set('Authorization', `Bearer ${token}`);
       expect(res.statusCode).toEqual(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body).toHaveProperty('success', true);
+      expect(res.body).toHaveProperty('pagination');
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
   });
 

@@ -1,0 +1,77 @@
+const Command = require('../models/Command');
+
+// @desc    Queue a new command for a device
+// @route   POST /api/commands/:deviceId
+// @access  Private (Admin)
+const queueCommand = async (req, res) => {
+  const { type, payload } = req.body;
+  const { deviceId } = req.params;
+
+  try {
+    const command = await Command.create({
+      deviceId,
+      type,
+      payload,
+      status: 'PENDING',
+    });
+    res.status(201).json(command);
+  } catch (error) {
+    res.status(400).json({ message: 'Error queueing command', error: error.message });
+  }
+};
+
+// @desc    Device fetches its pending commands
+// @route   GET /api/commands/:deviceId/pending
+// @access  Private (Device - could be a different auth mechanism in reality)
+const getPendingCommands = async (req, res) => {
+  try {
+    const commands = await Command.find({
+      deviceId: req.params.deviceId,
+      status: 'PENDING',
+    }).sort('createdAt');
+
+    // Optionally, update status to 'SENT'
+    // const commandIds = commands.map(cmd => cmd._id);
+    // await Command.updateMany({ _id: { $in: commandIds } }, { $set: { status: 'SENT' } });
+
+    res.status(200).json(commands);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Device updates the status of a command
+// @route   PUT /api/commands/:commandId
+// @access  Private (Device)
+const updateCommandStatus = async (req, res) => {
+  const { status, errorMessage } = req.body;
+  const { commandId } = req.params;
+
+  if (!status) {
+    return res.status(400).json({ message: 'Please provide a status' });
+  }
+
+  try {
+    const command = await Command.findById(commandId);
+    if (!command) {
+      return res.status(404).json({ message: 'Command not found' });
+    }
+
+    command.status = status;
+    command.executedAt = new Date();
+    if (errorMessage) {
+      command.errorMessage = errorMessage;
+    }
+
+    await command.save();
+    res.status(200).json(command);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating command status', error: error.message });
+  }
+};
+
+module.exports = {
+  queueCommand,
+  getPendingCommands,
+  updateCommandStatus,
+};

@@ -12,22 +12,38 @@ Retrieves a list of all contacts.
 - **Method:** `GET`
 - **Access:** `Private`
 
+### Query Parameters
+
+- `select` (String): Comma-separated list of fields to include in the result. Example: `?select=name,phoneNumber`
+- `sort` (String): Field to sort by. Add a `-` prefix for descending order. Example: `?sort=-createdAt`
+- `page` (Number): Page number for pagination. Default: `1`.
+- `limit` (Number): Number of results per page. Default: `25`.
+
 ### Success Response
 
 - **Code:** `200 OK`
-- **Content:** An array of contact objects.
+- **Content:** A paginated object containing an array of contact objects.
 
 ```json
-[
-  {
-    "_id": "60d5f1b4e6b3f1a1b8f3a3a1",
-    "deviceId": "device-123",
-    "name": "Jules Verne",
-    "phoneNumber": "+1234567890",
-    "createdAt": "2023-01-01T00:00:00.000Z",
-    "updatedAt": "2023-01-01T00:00:00.000Z"
-  }
-]
+{
+  "success": true,
+  "count": 1,
+  "pagination": {
+    "total": 1,
+    "pages": 1,
+    "currentPage": 1
+  },
+  "data": [
+    {
+      "_id": "60d5f1b4e6b3f1a1b8f3a3a1",
+      "deviceId": "device-123",
+      "name": "Jules Verne",
+      "phoneNumber": "+1234567890",
+      "createdAt": "2023-01-01T00:00:00.000Z",
+      "updatedAt": "2023-01-01T00:00:00.000Z"
+    }
+  ]
+}
 ```
 
 ---

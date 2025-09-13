@@ -15,23 +15,38 @@ Retrieves a list of all call logs for a specific device, sorted by the most rece
 ### URL Parameters
 - `deviceId` (String, required): The ID of the device.
 
+### Query Parameters
+- `select` (String): Comma-separated list of fields to include.
+- `sort` (String): Field to sort by (e.g., `sort=-callDate`).
+- `page` (Number): Page number for pagination.
+- `limit` (Number): Number of results per page.
+
 ### Success Response
 - **Code:** `200 OK`
-- **Content:** An array of call log objects.
+- **Content:** A paginated object containing an array of call log objects.
 
 ```json
-[
-  {
-    "_id": "60d5f1b4e6b3f1a1b8f3a3a1",
-    "deviceId": "device-123",
-    "phoneNumber": "+1-555-123-4567",
-    "type": "INCOMING",
-    "duration": 120,
-    "callDate": "2023-10-27T10:00:00.000Z",
-    "createdAt": "2023-10-27T10:02:00.000Z",
-    "updatedAt": "2023-10-27T10:02:00.000Z"
-  }
-]
+{
+  "success": true,
+  "count": 1,
+  "pagination": {
+    "total": 1,
+    "pages": 1,
+    "currentPage": 1
+  },
+  "data": [
+    {
+      "_id": "60d5f1b4e6b3f1a1b8f3a3a1",
+      "deviceId": "device-123",
+      "phoneNumber": "+1-555-123-4567",
+      "type": "INCOMING",
+      "duration": 120,
+      "callDate": "2023-10-27T10:00:00.000Z",
+      "createdAt": "2023-10-27T10:02:00.000Z",
+      "updatedAt": "2023-10-27T10:02:00.000Z"
+    }
+  ]
+}
 ```
 
 ---

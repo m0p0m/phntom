@@ -4,9 +4,7 @@ const Contact = require('../models/Contact');
 // @route   GET /api/contacts
 // @access  Private
 const getContacts = async (req, res) => {
-  // TODO: In a multi-user/device scenario, filter by user/device
-  const contacts = await Contact.find({});
-  res.status(200).json(contacts);
+  res.status(200).json(res.advancedResults);
 };
 
 // @desc    Create a contact

@@ -11,7 +11,10 @@ router.use(protect);
 router.route('/')
   .post(addCallLog);
 
+const CallLog = require('../models/CallLog');
+const advancedResults = require('../middlewares/advancedResults');
+
 router.route('/:deviceId')
-  .get(getCallLogs);
+  .get(advancedResults(CallLog), getCallLogs);
 
 module.exports = router;

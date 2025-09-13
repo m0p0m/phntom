@@ -12,8 +12,11 @@ const { protect } = require('../middlewares/authMiddleware');
 // All these routes are protected
 router.use(protect);
 
+const Contact = require('../models/Contact');
+const advancedResults = require('../middlewares/advancedResults');
+
 router.route('/')
-  .get(getContacts)
+  .get(advancedResults(Contact), getContacts)
   .post(createContact);
 
 router.route('/:id')

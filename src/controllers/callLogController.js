@@ -4,12 +4,7 @@ const CallLog = require('../models/CallLog');
 // @route   GET /api/call-logs/:deviceId
 // @access  Private
 const getCallLogs = async (req, res) => {
-  try {
-    const logs = await CallLog.find({ deviceId: req.params.deviceId }).sort({ callDate: -1 });
-    res.status(200).json(logs);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
-  }
+  res.status(200).json(res.advancedResults);
 };
 
 // @desc    Add a call log

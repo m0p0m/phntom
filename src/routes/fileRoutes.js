@@ -15,7 +15,10 @@ router.route('/')
 router.route('/:id')
   .delete(deleteFile);
 
+const File = require('../models/File');
+const advancedResults = require('../middlewares/advancedResults');
+
 router.route('/:deviceId')
-  .get(getFiles);
+  .get(advancedResults(File), getFiles);
 
 module.exports = router;
