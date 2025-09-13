@@ -28,6 +28,7 @@ Retrieves a list of all gallery item metadata for a specific device.
     "deviceId": "device-123",
     "imageUrl": "https://example.com/image.jpg",
     "caption": "A beautiful sunset",
+    "sourceApp": "Instagram",
     "takenAt": "2023-01-01T18:00:00.000Z",
     "createdAt": "2023-01-02T10:00:00.000Z",
     "updatedAt": "2023-01-02T10:00:00.000Z"
@@ -52,6 +53,7 @@ Adds metadata for a new gallery item to the database.
   "deviceId": "device-123",
   "imageUrl": "https://example.com/new_image.png",
   "caption": "Fun at the beach",
+  "sourceApp": "TikTok",
   "takenAt": "2023-07-15T14:30:00.000Z"
 }
 ```

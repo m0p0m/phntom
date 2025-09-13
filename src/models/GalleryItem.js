@@ -14,6 +14,10 @@ const galleryItemSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    sourceApp: {
+      type: String,
+      trim: true,
+    },
     takenAt: {
       type: Date, // To store when the picture was taken
     }

@@ -36,9 +36,11 @@ describe('Gallery API', () => {
           deviceId: testDeviceId,
           imageUrl: 'http://example.com/image1.jpg',
           caption: 'Test Image 1',
+          sourceApp: 'Camera',
         });
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('imageUrl', 'http://example.com/image1.jpg');
+      expect(res.body).toHaveProperty('sourceApp', 'Camera');
     });
 
     it('should return 400 if required fields are missing', async () => {
@@ -75,6 +77,7 @@ describe('Gallery API', () => {
       expect(res.statusCode).toEqual(200);
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBe(2);
+      expect(res.body[0]).toHaveProperty('sourceApp');
     });
 
     it('should return an empty array for a device with no items', async () => {

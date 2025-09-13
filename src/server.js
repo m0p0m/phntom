@@ -22,6 +22,7 @@ app.use('/api/gallery', require('./routes/galleryRoutes'));
 app.use('/api/location', require('./routes/locationRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
 app.use('/api/apps', require('./routes/appRoutes'));
+app.use('/api/call-logs', require('./routes/callLogRoutes'));
 
 
 const PORT = process.env.PORT || 5000;

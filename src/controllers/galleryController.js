@@ -16,7 +16,7 @@ const getGalleryItems = async (req, res) => {
 // @route   POST /api/gallery
 // @access  Private
 const addGalleryItem = async (req, res) => {
-  const { deviceId, imageUrl, caption, takenAt } = req.body;
+  const { deviceId, imageUrl, caption, takenAt, sourceApp } = req.body;
 
   if (!deviceId || !imageUrl) {
     return res.status(400).json({ message: 'Please provide a deviceId and imageUrl' });
@@ -27,7 +27,8 @@ const addGalleryItem = async (req, res) => {
       deviceId,
       imageUrl,
       caption,
-      takenAt
+      takenAt,
+      sourceApp,
     });
     res.status(201).json(item);
   } catch (error) {
