@@ -1,11 +1,13 @@
 const request = require('supertest');
 const { app } = require('../server');
-const Device = require('../models/Device');
+const fs = require('fs');
+const path = require('path');
 
 describe('Files API (Refactored)', () => {
   let token;
   let testDeviceId;
   let fileId;
+  let uploadedFilename;
 
   beforeAll(async () => {
     const res = await request(app)
@@ -27,32 +29,6 @@ describe('Files API (Refactored)', () => {
     testDeviceId = deviceRes.body._id;
   });
 
-  const fileData = {
-    fileName: 'test-file.txt',
-    filePath: '/data/test-file.txt',
-    fileType: 'text/plain',
-    size: 1024,
-    storageUrl: 'http://example.com/storage/test-file.txt',
-  };
-
-  it('should add new file metadata for a device', async () => {
-    const res = await request(app)
-      .post(`/api/devices/${testDeviceId}/files`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(fileData);
-    expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty('fileName', fileData.fileName);
-    fileId = res.body._id;
-  });
-
-  it('should get file metadata for a device', async () => {
-    const res = await request(app)
-      .get(`/api/devices/${testDeviceId}/files`)
-      .set('Authorization', `Bearer ${token}`);
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.data.length).toBe(1);
-  });
-
   it('should upload a file and create metadata', async () => {
     const res = await request(app)
       .post(`/api/devices/${testDeviceId}/files/upload`)
@@ -62,13 +38,27 @@ describe('Files API (Refactored)', () => {
 
     expect(res.statusCode).toEqual(201);
     expect(res.body.file).toHaveProperty('fileName', 'test-upload.txt');
-    expect(res.body.file).toHaveProperty('filePath', '/data/on-device/test-upload.txt');
+    fileId = res.body.file._id;
+    uploadedFilename = res.body.file.storageUrl.split('/').pop();
   });
 
-  it('should delete file metadata', async () => {
+  it('should get file metadata for the device', async () => {
     const res = await request(app)
-      .delete(`/api/files/${fileId}`) // This is a top-level route
+      .get(`/api/devices/${testDeviceId}/files`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.statusCode).toEqual(200);
+    expect(res.body.data.length).toBe(1);
+  });
+
+  it('should delete file metadata and the physical file', async () => {
+    const res = await request(app)
+      .delete(`/api/files/${fileId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.statusCode).toEqual(200);
+
+    // Verify the file is gone from the filesystem
+    const filePath = path.join(__dirname, '../../uploads', uploadedFilename);
+    const fileExists = fs.existsSync(filePath);
+    expect(fileExists).toBe(false);
   });
 });

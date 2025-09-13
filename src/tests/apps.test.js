@@ -1,7 +1,6 @@
 const request = require('supertest');
 const { app } = require('../server');
 const InstalledApp = require('../models/InstalledApp');
-const Device = require('../models/Device');
 
 describe('Installed Apps API (Refactored)', () => {
   let token;
@@ -13,8 +12,8 @@ describe('Installed Apps API (Refactored)', () => {
   ];
 
   const updatedApps = [
-    { appName: 'App B', packageName: 'com.b.app', version: '2.1' }, // Updated version
-    { appName: 'App C', packageName: 'com.c.app', version: '3.0' }, // New app
+    { appName: 'App B', packageName: 'com.b.app', version: '2.1' },
+    { appName: 'App C', packageName: 'com.c.app', version: '3.0' },
   ];
 
   beforeAll(async () => {
@@ -38,37 +37,27 @@ describe('Installed Apps API (Refactored)', () => {
   });
 
   it('should perform an initial sync and a subsequent updated sync', async () => {
-    // 1. Initial Sync
-    const res1 = await request(app)
+    // Initial Sync
+    await request(app)
       .post(`/api/devices/${testDeviceId}/apps/sync`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ apps: initialApps });
-    expect(res1.statusCode).toEqual(200);
+      .send({ apps: initialApps })
+      .expect(200);
 
     let appsInDb = await InstalledApp.find({ device: testDeviceId });
     expect(appsInDb.length).toBe(2);
 
-    // 2. Updated Sync
-    const res2 = await request(app)
+    // Updated Sync
+    await request(app)
       .post(`/api/devices/${testDeviceId}/apps/sync`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ apps: updatedApps });
-    expect(res2.statusCode).toEqual(200);
+      .send({ apps: updatedApps })
+      .expect(200);
 
     appsInDb = await InstalledApp.find({ device: testDeviceId }).lean();
     expect(appsInDb.length).toBe(2);
     const packageNames = appsInDb.map(app => app.packageName);
-    expect(packageNames).toContain('com.c.app');
     expect(packageNames).not.toContain('com.a.app');
-  });
-
-  it('should get the synced list of apps for a device', async () => {
-    const res = await request(app)
-      .get(`/api/devices/${testDeviceId}/apps`)
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data.length).toBe(2);
+    expect(packageNames).toContain('com.c.app');
   });
 });

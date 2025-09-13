@@ -1,6 +1,5 @@
 const request = require('supertest');
-const { app, server } = require('../server');
-const Device = require('../models/Device');
+const { app } = require('../server'); // We can still use app for supertest
 const { io: clientIO } = require('socket.io-client');
 
 describe('Devices API & Sockets', () => {
@@ -10,8 +9,8 @@ describe('Devices API & Sockets', () => {
 
   // Connect a socket client before all tests
   beforeAll((done) => {
-    const port = server.address().port;
-    clientSocket = clientIO(`http://localhost:${port}`);
+    // serverAddress is now a global from setup.js
+    clientSocket = clientIO(global.serverAddress);
 
     const loginAndGetToken = async () => {
         const res = await request(app)
@@ -44,13 +43,11 @@ describe('Devices API & Sockets', () => {
 
   describe('Device Registration and Real-time Events', () => {
     it('should register a new device and emit a "device:registered" event', (done) => {
-      // Listen for the event
       clientSocket.on('device:registered', (device) => {
         expect(device).toHaveProperty('uniqueIdentifier', testDeviceIdentifier);
         done();
       });
 
-      // Trigger the action
       request(app)
         .post('/api/devices/register')
         .set('Authorization', `Bearer ${token}`)
@@ -61,14 +58,12 @@ describe('Devices API & Sockets', () => {
 
   describe('Device Heartbeat and Real-time Events', () => {
     it('should receive a heartbeat and emit a "device:status_update" event', (done) => {
-        // Listen for the event
         clientSocket.on('device:status_update', (device) => {
           expect(device).toHaveProperty('uniqueIdentifier', testDeviceIdentifier);
           expect(device.ram.free).toBe(1.5);
           done();
         });
 
-        // Trigger the action
         request(app)
           .post('/api/devices/heartbeat')
           .set('Authorization', `Bearer ${token}`)
@@ -89,7 +84,7 @@ describe('Devices API & Sockets', () => {
         expect(res.statusCode).toEqual(200);
         expect(Array.isArray(res.body)).toBe(true);
         expect(res.body.length).toBeGreaterThan(0);
-        expect(res.body[0]).toHaveProperty('status'); // Check for virtual property
+        expect(res.body[0]).toHaveProperty('status');
     });
   });
 });

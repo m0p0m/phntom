@@ -1,6 +1,5 @@
 const request = require('supertest');
 const { app } = require('../server');
-const Device = require('../models/Device');
 
 describe('Gallery API (Refactored)', () => {
   let token;

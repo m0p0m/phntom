@@ -1,17 +1,9 @@
 const request = require('supertest');
 const { app } = require('../server');
-const Device = require('../models/Device');
 
 describe('Call Logs API (Refactored)', () => {
   let token;
   let testDeviceId;
-
-  const callLogData = {
-    phoneNumber: '555-111-2222',
-    type: 'INCOMING',
-    duration: 60,
-    callDate: new Date().toISOString(),
-  };
 
   beforeAll(async () => {
     const res = await request(app)
@@ -37,9 +29,14 @@ describe('Call Logs API (Refactored)', () => {
     const res = await request(app)
       .post(`/api/devices/${testDeviceId}/call-logs`)
       .set('Authorization', `Bearer ${token}`)
-      .send(callLogData);
+      .send({
+        phoneNumber: '555-111-2222',
+        type: 'INCOMING',
+        duration: 60,
+        callDate: new Date().toISOString(),
+      });
     expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty('phoneNumber', callLogData.phoneNumber);
+    expect(res.body).toHaveProperty('device', testDeviceId);
   });
 
   it('should get all call logs for a device', async () => {
