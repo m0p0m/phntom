@@ -1,13 +1,14 @@
 const request = require('supertest');
-const { app } = require('../server');
 const Device = require('../models/Device');
 
 describe('Contacts API (Refactored)', () => {
   let token;
   let testDeviceId;
   let contactId;
+  let app;
 
   beforeAll(async () => {
+    app = require('../server').app;
     const res = await request(app)
       .post('/api/auth/login')
       .send({

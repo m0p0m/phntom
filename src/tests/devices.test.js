@@ -1,14 +1,15 @@
 const request = require('supertest');
-const { app } = require('../server'); // We can still use app for supertest
 const { io: clientIO } = require('socket.io-client');
 
 describe('Devices API & Sockets', () => {
   let token;
   let clientSocket;
+  let app;
   const testDeviceIdentifier = 'test-device-for-sockets';
 
   // Connect a socket client before all tests
   beforeAll((done) => {
+    app = require('../server').app;
     // serverAddress is now a global from setup.js
     clientSocket = clientIO(global.serverAddress);
 

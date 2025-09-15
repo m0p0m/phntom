@@ -1,13 +1,14 @@
 const request = require('supertest');
-const { app } = require('../server');
 const Device = require('../models/Device');
 const Location = require('../models/Location');
 
 describe('Location API (Refactored)', () => {
   let token;
   let testDevice;
+  let app;
 
   beforeAll(async () => {
+    app = require('../server').app;
     // Get Token
     const res = await request(app)
       .post('/api/auth/login')

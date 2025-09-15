@@ -62,6 +62,7 @@ const io = new Server(server, {
 });
 
 // Socket.IO connection
+app.set('socketio', io); // Make io available to any route
 require('./socket')(io);
 
 

@@ -1,33 +1,35 @@
-const path = require('path');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
-const { app, server, io } = require('../server');
+const connectDB = require('../config/db');
 
-let mongod;
 let testServer;
+let io;
 
 global.serverAddress = '';
 
 beforeAll(async () => {
-  mongod = await MongoMemoryServer.create();
-  const uri = mongod.getUri();
-  process.env.MONGO_URI = uri;
-
-  // This connectDB call is now redundant because we connect right after, but it's harmless
-  // In a larger refactor, we might make connectDB return the connection instead of being global
-  const connectDB = require('../config/db');
+  // The MONGO_URI is now expected to be in the config.env file
+  // Connect to the database
   await connectDB();
 
+  // IMPORTANT: Require the server *after* the DB connection is established.
+  const serverModule = require('../server');
+  const server = serverModule.server;
+  io = serverModule.io;
+
   testServer = server.listen(0, () => {
-    global.serverAddress = `http://localhost:${testServer.address().port}`;
+    const port = testServer.address().port;
+    global.serverAddress = `http://localhost:${port}`;
   });
 });
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongod.stop();
-  io.close();
-  await new Promise(resolve => testServer.close(resolve));
+  if (io) {
+    io.close();
+  }
+  if (testServer) {
+    await new Promise(resolve => testServer.close(resolve));
+  }
 });
 
 beforeEach(async () => {

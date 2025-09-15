@@ -1,12 +1,13 @@
 const request = require('supertest');
-const { app } = require('../server');
 
 describe('Commands API (Refactored)', () => {
   let token;
   let commandId;
   let testDeviceId;
+  let app;
 
   beforeAll(async () => {
+    app = require('../server').app;
     const res = await request(app)
       .post('/api/auth/login')
       .send({

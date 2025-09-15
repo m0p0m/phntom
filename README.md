@@ -13,10 +13,16 @@ This is the backend server for a comprehensive device management application, bu
 
 ## Prerequisites
 
-- [Docker](https://www.docker.com/products/docker-desktop)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+- For running with Docker (recommended):
+  - [Docker](https://www.docker.com/products/docker-desktop)
+  - [Docker Compose](https://docs.docker.com/compose/install/)
+- For local development and testing (without Docker):
+  - [Node.js](https://nodejs.org/) (v14 or higher)
+  - A running [MongoDB](https://www.mongodb.com/try/download/community) instance.
 
 ## Getting Started
+
+There are two ways to run the application: via Docker (recommended for production-like setup) or locally on your machine (ideal for development and testing).
 
 ### 1. Environment Configuration
 
@@ -32,6 +38,11 @@ Next, open the `config.env` file and fill in the values for the following variab
 # Server Port
 PORT=5000
 
+# MongoDB Connection URI
+# For a local MongoDB instance, this would look like:
+# MONGO_URI=mongodb://localhost:27017/your_db_name
+MONGO_URI=mongodb://localhost:27017/device_management_db
+
 # Admin Credentials for the initial login
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_secure_password
@@ -41,9 +52,9 @@ JWT_SECRET=your_super_long_and_random_jwt_secret
 JWT_EXPIRES_IN=30d
 ```
 
-**Note:** The `docker-compose.yml` file is configured to pass these variables from your local `config.env` file into the `app` service container.
+### 2. Running with Docker (Recommended)
 
-### 2. Running with Docker Compose
+The `docker-compose.yml` file is configured to use the official MongoDB image and will pass the environment variables from your local `config.env` file into the `app` service container.
 
 Once the `config.env` file is created, you can build and run the entire application stack with a single command:
 
@@ -54,9 +65,27 @@ docker-compose up --build
 - `--build`: Forces Docker to rebuild the application image based on the `Dockerfile`. You should use this the first time you run the app or after making code changes.
 - You can add the `-d` flag (`docker-compose up --build -d`) to run the containers in detached mode (in the background).
 
-The server will be running at `http://localhost:5000`. The MongoDB database will be accessible on port `27017`.
+The server will be running at `http://localhost:5000`. The MongoDB database (inside Docker) will be accessible on port `27017`.
 
-### 3. Stopping the Application
+### 3. Running Locally (Without Docker)
+
+If you prefer to run the application directly on your machine, follow these steps after configuring your `config.env` file:
+
+1.  **Install Dependencies:**
+    ```bash
+    npm install
+    ```
+2.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+3.  **Run tests:**
+    ```bash
+    npm test
+    ```
+    **Note:** The tests will run against the database specified in your `MONGO_URI`. It is highly recommended to use a dedicated test database, as the tests will wipe all data from the collections before running.
+
+### 4. Stopping the Application
 
 To stop the containers, press `Ctrl + C` in the terminal where they are running, or run the following command from the project root:
 

@@ -1,22 +1,15 @@
 const request = require('supertest');
-const { app } = require('../server');
 const InstalledApp = require('../models/InstalledApp');
 
 describe('Installed Apps API (Refactored)', () => {
   let token;
   let testDeviceId;
-
-  const initialApps = [
-    { appName: 'App A', packageName: 'com.a.app', version: '1.0' },
-    { appName: 'App B', packageName: 'com.b.app', version: '2.0' },
-  ];
-
-  const updatedApps = [
-    { appName: 'App B', packageName: 'com.b.app', version: '2.1' },
-    { appName: 'App C', packageName: 'com.c.app', version: '3.0' },
-  ];
+  let app;
 
   beforeAll(async () => {
+    // Dynamically require the app object to ensure setup runs first
+    app = require('../server').app;
+
     const res = await request(app)
       .post('/api/auth/login')
       .send({
@@ -35,6 +28,16 @@ describe('Installed Apps API (Refactored)', () => {
       });
     testDeviceId = deviceRes.body._id;
   });
+
+  const initialApps = [
+    { appName: 'App A', packageName: 'com.a.app', version: '1.0' },
+    { appName: 'App B', packageName: 'com.b.app', version: '2.0' },
+  ];
+
+  const updatedApps = [
+    { appName: 'App B', packageName: 'com.b.app', version: '2.1' },
+    { appName: 'App C', packageName: 'com.c.app', version: '3.0' },
+  ];
 
   it('should perform an initial sync and a subsequent updated sync', async () => {
     // Initial Sync

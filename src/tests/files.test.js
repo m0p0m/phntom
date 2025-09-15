@@ -1,5 +1,4 @@
 const request = require('supertest');
-const { app } = require('../server');
 const fs = require('fs');
 const path = require('path');
 
@@ -8,8 +7,10 @@ describe('Files API (Refactored)', () => {
   let testDeviceId;
   let fileId;
   let uploadedFilename;
+  let app;
 
   beforeAll(async () => {
+    app = require('../server').app;
     const res = await request(app)
       .post('/api/auth/login')
       .send({
