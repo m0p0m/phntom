@@ -38,12 +38,12 @@ const createContact = async (req, res) => {
 };
 
 // @desc    Get a single contact
-// @route   GET /api/contacts/:id
+// @route   GET /api/devices/:deviceId/contacts/:contactId
 // @access  Private
 const getContact = async (req, res) => {
   try {
-    const contact = await Contact.findById(req.params.id);
-    if (!contact) {
+    const contact = await Contact.findById(req.params.contactId);
+    if (!contact || contact.device.toString() !== req.params.deviceId) {
       return res.status(404).json({ message: 'Contact not found' });
     }
     res.status(200).json(contact);
@@ -53,39 +53,39 @@ const getContact = async (req, res) => {
 };
 
 // @desc    Update a contact
-// @route   PUT /api/contacts/:id
+// @route   PUT /api/devices/:deviceId/contacts/:contactId
 // @access  Private
 const updateContact = async (req, res) => {
   try {
-    const contact = await Contact.findById(req.params.id);
-    if (!contact) {
+    let contact = await Contact.findById(req.params.contactId);
+    if (!contact || contact.device.toString() !== req.params.deviceId) {
       return res.status(404).json({ message: 'Contact not found' });
     }
 
-    const updatedContact = await Contact.findByIdAndUpdate(req.params.id, req.body, {
+    contact = await Contact.findByIdAndUpdate(req.params.contactId, req.body, {
       new: true,
       runValidators: true,
     });
 
-    res.status(200).json(updatedContact);
+    res.status(200).json(contact);
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };
 
 // @desc    Delete a contact
-// @route   DELETE /api/contacts/:id
+// @route   DELETE /api/devices/:deviceId/contacts/:contactId
 // @access  Private
 const deleteContact = async (req, res) => {
   try {
-    const contact = await Contact.findById(req.params.id);
-    if (!contact) {
+    const contact = await Contact.findById(req.params.contactId);
+    if (!contact || contact.device.toString() !== req.params.deviceId) {
       return res.status(404).json({ message: 'Contact not found' });
     }
 
     await contact.deleteOne();
 
-    res.status(200).json({ id: req.params.id, message: 'Contact removed' });
+    res.status(200).json({ id: req.params.contactId, message: 'Contact removed' });
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
