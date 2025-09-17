@@ -52,7 +52,7 @@ describe('Files API (Refactored)', () => {
 
   it('should delete file metadata and the physical file', async () => {
     const res = await request(app)
-      .delete(`/api/files/${fileId}`)
+      .delete(`/api/devices/${testDeviceId}/files/${fileId}`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.statusCode).toEqual(200);
 

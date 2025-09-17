@@ -15,7 +15,7 @@ const getDevices = async (req, res) => {
 // @desc    Register a new device
 // @route   POST /api/devices/register
 // @access  Private
-const registerDevice = async (req, res) => {
+const registerDevice = (io) => async (req, res) => {
   const { uniqueIdentifier, deviceName, platform, storage, ram } = req.body;
 
   try {
@@ -35,7 +35,7 @@ const registerDevice = async (req, res) => {
     });
 
     // Emit event to all connected clients
-    req.io.emit('device:registered', device);
+    io.emit('device:registered', device);
 
     res.status(201).json(device);
   } catch (error) {
@@ -46,7 +46,7 @@ const registerDevice = async (req, res) => {
 // @desc    Receive a heartbeat from a device
 // @route   POST /api/devices/heartbeat
 // @access  Private
-const deviceHeartbeat = async (req, res) => {
+const deviceHeartbeat = (io) => async (req, res) => {
   const { uniqueIdentifier, storage, ram } = req.body;
 
   if (!uniqueIdentifier) {
@@ -72,7 +72,7 @@ const deviceHeartbeat = async (req, res) => {
     }
 
     // Emit event to all connected clients
-    req.io.emit('device:status_update', device);
+    io.emit('device:status_update', device);
 
     res.status(200).json({ message: 'Heartbeat received' });
   } catch (error) {

@@ -1,9 +1,5 @@
 const express = require('express');
-const router = express.Router();
-
-// Middleware
 const { protect } = require('../middlewares/authMiddleware');
-const socketInjector = require('../middlewares/socketInjector');
 const advancedResults = require('../middlewares/advancedResults');
 
 // Models
@@ -16,19 +12,29 @@ const InstalledApp = require('../models/InstalledApp');
 
 // Controllers
 const { getDevices, registerDevice, deviceHeartbeat } = require('../controllers/deviceController');
-const { getContacts, createContact } = require('../controllers/contactController');
+const {
+  getContacts,
+  createContact,
+  getContact,
+  updateContact,
+  deleteContact,
+} = require('../controllers/contactController');
 const { getGalleryItems, addGalleryItem } = require('../controllers/galleryController');
-const { getFiles, addFile, uploadFile } = require('../controllers/fileController');
+const { getFiles, addFile, uploadFile, deleteFile } = require('../controllers/fileController');
 const { getCallLogs, addCallLog } = require('../controllers/callLogController');
 const { getInstalledApps, syncInstalledApps } = require('../controllers/appController');
+const { updateLocation, getLatestLocation } = require('../controllers/locationController');
 
-// Protect all device routes and inject socket
-router.use(protect, socketInjector);
+const createDeviceRouter = (io) => {
+  const router = express.Router();
 
-// Main device routes
-router.route('/').get(getDevices);
-router.route('/register').post(registerDevice);
-router.route('/heartbeat').post(deviceHeartbeat);
+  // Protect all device routes
+  router.use(protect);
+
+  // Main device routes
+  router.route('/').get(getDevices);
+  router.route('/register').post(registerDevice(io));
+  router.route('/heartbeat').post(deviceHeartbeat(io));
 
 // --- Nested Routes ---
 
@@ -36,6 +42,11 @@ router.route('/heartbeat').post(deviceHeartbeat);
 router.route('/:deviceId/contacts')
   .get(advancedResults(Contact, { path: 'device', select: 'deviceName' }), getContacts)
   .post(createContact);
+
+router.route('/:deviceId/contacts/:contactId')
+  .get(getContact)
+  .put(updateContact)
+  .delete(deleteContact);
 
 // Gallery
 router.route('/:deviceId/gallery')
@@ -47,6 +58,7 @@ router.route('/:deviceId/files')
   .get(advancedResults(File, { path: 'device', select: 'deviceName' }), getFiles)
   .post(addFile);
 router.route('/:deviceId/files/upload').post(uploadFile);
+router.route('/:deviceId/files/:fileId').delete(deleteFile);
 
 // Call Logs
 router.route('/:deviceId/call-logs')
@@ -58,5 +70,13 @@ router.route('/:deviceId/apps')
   .get(advancedResults(InstalledApp, { path: 'device', select: 'deviceName' }), getInstalledApps)
 router.route('/:deviceId/apps/sync').post(syncInstalledApps);
 
+// Location
+router.route('/:deviceId/location')
+  .get(getLatestLocation)
+  .post(updateLocation);
 
-module.exports = router;
+
+  return router;
+};
+
+module.exports = createDeviceRouter;

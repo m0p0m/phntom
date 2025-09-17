@@ -1,25 +1,27 @@
 const Location = require('../models/Location');
 const Device = require('../models/Device');
 
-// @desc    Update a device's location (or create if it doesn't exist)
-// @route   POST /api/location
+// @desc    Update a device's location
+// @route   POST /api/devices/:deviceId/location
 // @access  Private
 const updateLocation = async (req, res) => {
-  // The device agent should send its persistent unique identifier
-  const { uniqueIdentifier, latitude, longitude, timestamp } = req.body;
+  const { latitude, longitude, timestamp } = req.body;
+  const { deviceId } = req.params;
 
-  if (uniqueIdentifier == null || latitude == null || longitude == null) {
-    return res.status(400).json({ message: 'Please provide uniqueIdentifier, latitude, and longitude' });
+  if (latitude == null || longitude == null) {
+    return res.status(400).json({ message: 'Please provide latitude and longitude' });
   }
 
   try {
-    const device = await Device.findOne({ uniqueIdentifier });
-    if (!device) {
-        return res.status(404).json({ message: 'Device not registered' });
+    // Device existence is already checked by the time we get here if this is a protected route
+    // that verifies device ownership, but a direct check is safer.
+    const device = await Device.findById(deviceId);
+     if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
     }
 
     const location = await Location.findOneAndUpdate(
-      { device: device._id },
+      { device: deviceId },
       {
         $set: {
           latitude,
@@ -29,7 +31,7 @@ const updateLocation = async (req, res) => {
       },
       {
         new: true,
-        upsert: true,
+        upsert: true, // Create a location doc if one doesn't exist
         runValidators: true,
       }
     );
@@ -40,7 +42,7 @@ const updateLocation = async (req, res) => {
 };
 
 // @desc    Get the latest location for a device
-// @route   GET /api/location/:deviceId
+// @route   GET /api/devices/:deviceId/location
 // @access  Private
 const getLatestLocation = async (req, res) => {
   try {
