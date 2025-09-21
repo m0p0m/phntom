@@ -49,10 +49,32 @@ describe('Contacts API (Refactored)', () => {
     });
 
   it('should get a single contact by its ID', async () => {
-      const res = await request(app)
-          .get(`/api/contacts/${contactId}`)
-          .set('Authorization', `Bearer ${token}`);
-      expect(res.statusCode).toEqual(200);
-      expect(res.body._id).toBe(contactId);
+    const res = await request(app)
+      .get(`/api/devices/${testDeviceId}/contacts/${contactId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body._id).toBe(contactId);
+  });
+
+  it('should update a contact', async () => {
+    const res = await request(app)
+      .put(`/api/devices/${testDeviceId}/contacts/${contactId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Updated Contact Name' });
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.name).toBe('Updated Contact Name');
+  });
+
+  it('should delete a contact', async () => {
+    const res = await request(app)
+      .delete(`/api/devices/${testDeviceId}/contacts/${contactId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.statusCode).toEqual(200);
+
+    // Verify it's gone
+    const getRes = await request(app)
+      .get(`/api/devices/${testDeviceId}/contacts/${contactId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(getRes.statusCode).toEqual(404);
   });
 });

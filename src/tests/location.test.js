@@ -29,13 +29,12 @@ describe('Location API (Refactored)', () => {
     testDevice = deviceRes.body;
   });
 
-  describe('POST /api/location', () => {
-    it('should create a new location entry for a registered device', async () => {
+  describe('Location Routes', () => {
+    it('should create a new location entry for a device', async () => {
       const res = await request(app)
-        .post('/api/location')
+        .post(`/api/devices/${testDevice._id}/location`)
         .set('Authorization', `Bearer ${token}`)
         .send({
-          uniqueIdentifier: testDevice.uniqueIdentifier,
           latitude: 10,
           longitude: 20,
         });
@@ -43,12 +42,10 @@ describe('Location API (Refactored)', () => {
       expect(res.body).toHaveProperty('latitude', 10);
       expect(res.body).toHaveProperty('device', testDevice._id);
     });
-  });
 
-  describe('GET /api/location/:deviceId', () => {
-    it('should get the latest location for a device using its _id', async () => {
+    it('should get the latest location for a device', async () => {
       const res = await request(app)
-        .get(`/api/location/${testDevice._id}`)
+        .get(`/api/devices/${testDevice._id}/location`)
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.statusCode).toEqual(200);

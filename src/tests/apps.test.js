@@ -1,6 +1,7 @@
 const request = require('supertest');
-const { app } = require('../server');
 const InstalledApp = require('../models/InstalledApp');
+
+// Note: We now use global.serverAddress from setup.js instead of importing the app directly.
 
 describe('Installed Apps API (Refactored)', () => {
   let token;
@@ -17,7 +18,7 @@ describe('Installed Apps API (Refactored)', () => {
   ];
 
   beforeAll(async () => {
-    const res = await request(app)
+    const res = await request(global.serverAddress)
       .post('/api/auth/login')
       .send({
         username: process.env.ADMIN_USERNAME,
@@ -25,7 +26,7 @@ describe('Installed Apps API (Refactored)', () => {
       });
     token = res.body.token;
 
-    const deviceRes = await request(app)
+    const deviceRes = await request(global.serverAddress)
       .post('/api/devices/register')
       .set('Authorization', `Bearer ${token}`)
       .send({
@@ -38,7 +39,7 @@ describe('Installed Apps API (Refactored)', () => {
 
   it('should perform an initial sync and a subsequent updated sync', async () => {
     // Initial Sync
-    await request(app)
+    await request(global.serverAddress)
       .post(`/api/devices/${testDeviceId}/apps/sync`)
       .set('Authorization', `Bearer ${token}`)
       .send({ apps: initialApps })
@@ -48,7 +49,7 @@ describe('Installed Apps API (Refactored)', () => {
     expect(appsInDb.length).toBe(2);
 
     // Updated Sync
-    await request(app)
+    await request(global.serverAddress)
       .post(`/api/devices/${testDeviceId}/apps/sync`)
       .set('Authorization', `Bearer ${token}`)
       .send({ apps: updatedApps })

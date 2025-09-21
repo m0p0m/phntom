@@ -36,13 +36,18 @@ const fs = require('fs');
 const path = require('path');
 
 // @desc    Delete file metadata and the actual file
-// @route   DELETE /api/files/:id
+// @route   DELETE /api/devices/:deviceId/files/:fileId
 // @access  Private
 const deleteFile = async (req, res) => {
     try {
-      const file = await File.findById(req.params.id);
+      const file = await File.findById(req.params.fileId);
       if (!file) {
         return res.status(404).json({ message: 'File metadata not found' });
+      }
+
+      // Optional: Check if the file belongs to the device in req.params.deviceId
+      if (file.device.toString() !== req.params.deviceId) {
+        return res.status(401).json({ message: 'Not authorized to delete this file' });
       }
 
       const filePath = path.join(__dirname, `../../${file.storageUrl}`);
@@ -56,7 +61,7 @@ const deleteFile = async (req, res) => {
 
         // Delete metadata from DB
         await file.deleteOne();
-        res.status(200).json({ id: req.params.id, message: 'File metadata and file removed' });
+        res.status(200).json({ id: req.params.fileId, message: 'File metadata and file removed' });
       });
 
     } catch (error) {
