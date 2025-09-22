@@ -1,7 +1,12 @@
 const request = require('supertest');
-const { app } = require('../server'); // We still need app for supertest
+const { createApp } = require('../server');
 
 describe('Auth API', () => {
+  let app;
+  beforeAll(() => {
+    app = createApp();
+  });
+
   describe('POST /api/auth/login', () => {
     it('should return a JWT token for valid credentials', async () => {
       const res = await request(app)

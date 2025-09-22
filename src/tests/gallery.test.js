@@ -1,7 +1,11 @@
 const request = require('supertest');
-const { app } = require('../server');
+const { createApp } = require('../server');
 
 describe('Gallery API (Refactored)', () => {
+  let app;
+  beforeAll(() => {
+    app = createApp();
+  });
   let token;
   let testDeviceId;
 
