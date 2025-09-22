@@ -1,9 +1,13 @@
 const request = require('supertest');
-const { app } = require('../server');
+const { createApp } = require('../server');
 const fs = require('fs');
 const path = require('path');
 
 describe('Files API (Refactored)', () => {
+  let app;
+  beforeAll(() => {
+    app = createApp();
+  });
   let token;
   let testDeviceId;
   let fileId;
