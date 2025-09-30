@@ -1,8 +1,12 @@
 const request = require('supertest');
-const { app } = require('../server');
+const { createApp } = require('../server');
 const Device = require('../models/Device');
 
 describe('Contacts API (Refactored)', () => {
+  let app;
+  beforeAll(() => {
+    app = createApp();
+  });
   let token;
   let testDeviceId;
   let contactId;
